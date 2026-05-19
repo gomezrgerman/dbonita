@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Clay Design System — D Bonita ───────────────────────── */
+:root {
+  --color-bg:           #faf9f7;
+  --color-surface:      #ffffff;
+  --color-text:         #000000;
+  --color-text-muted:   #9f9b93;
+  --color-text-dark:    #55534e;
+  --color-accent:       #dad4c8;
+  --color-accent-light: #eee9df;
+
+  /* ── Colores de marca D Bonita ── */
+  --color-brand:        #F9BC1A;   /* amarillo logo — D */
+  --color-brand-dark:   #D9A010;
+  --color-brand-light:  #FDE9A0;
+  --color-brand-blue:   #6CC4E6;   /* azul logo — Bonita */
+  --color-brand-blue-light: #D6EFFA;
+
+  /* alias usados en componentes → ahora apuntan a colores de marca */
+  --color-primary:      #F9BC1A;
+  --color-primary-dark: #D9A010;
+  --color-pomegranate:  #F9BC1A;
+  --color-lemon:        #F9BC1A;
+  --color-lemon-light:  #FDE9A0;
+  --color-ube:          #6CC4E6;
+  --color-ube-light:    #D6EFFA;
+  --color-matcha:       #6CC4E6;
+  --color-matcha-dark:  #000000;
+  --color-matcha-light: #D6EFFA;
+  --color-slushie:      #6CC4E6;
+
+  --shadow-clay: rgba(0,0,0,0.10) 0px 1px 1px,
+                 rgba(0,0,0,0.04) 0px -1px 1px inset,
+                 rgba(0,0,0,0.05) 0px -0.5px 1px;
+  --shadow-hard: rgb(0,0,0) -7px 7px;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+
+::selection {
+  background-color: var(--color-lemon);
+  color: #000;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-accent); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+/* ── Section padding ─────────────────────────────────────── */
+.section-padding {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+@media (min-width: 1024px) {
+  .section-padding {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+}
+
+/* ── Decorative line ─────────────────────────────────────── */
+.decorative-line {
+  width: 40px;
+  height: 2px;
+  background: var(--color-primary);
+  display: inline-block;
+  border-radius: 2px;
+}
+
+/* ── Uppercase label (wayfinding) ────────────────────────── */
+.label-upper {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* ── Ticker ──────────────────────────────────────────────── */
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-ticker {
+  animation: ticker 35s linear infinite;
+  white-space: nowrap;
+}
+
+/* ── Clay button — base (no hover) ──────────────────────── */
+.btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: transform 0.18s cubic-bezier(0.22,1,0.36,1),
+              box-shadow 0.18s cubic-bezier(0.22,1,0.36,1),
+              background-color 0.18s ease,
+              color 0.18s ease;
+  will-change: transform;
+}
+
+/* ── Primary button ──────────────────────────────────────── */
+.btn-primary {
+  background-color: var(--color-brand-blue);
+  color: #1A3A4A;
+  padding: 0.75rem 1.75rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-clay);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: transform 0.18s cubic-bezier(0.22,1,0.36,1),
+              box-shadow 0.18s cubic-bezier(0.22,1,0.36,1);
+  will-change: transform;
+}
+.btn-primary:hover {
+  transform: rotateZ(-4deg) translateY(-4px);
+  box-shadow: rgb(0,0,0) -5px 5px;
+  background-color: var(--color-brand);
+}
+
+/* ── Secondary button ────────────────────────────────────── */
+.btn-secondary {
+  background-color: var(--color-surface);
+  color: #000;
+  padding: 0.75rem 1.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-accent);
+  box-shadow: var(--shadow-clay);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.18s cubic-bezier(0.22,1,0.36,1),
+              box-shadow 0.18s cubic-bezier(0.22,1,0.36,1),
+              border-color 0.18s ease;
+  will-change: transform;
+}
+.btn-secondary:hover {
+  transform: rotateZ(-4deg) translateY(-4px);
+  box-shadow: var(--shadow-hard);
+  border-color: #000;
+}
+
+/* ── Clay card ───────────────────────────────────────────── */
+.clay-card {
+  background: #fff;
+  border: 1px solid var(--color-accent);
+  border-radius: 24px;
+  box-shadow: var(--shadow-clay);
+}
+
+/* ── Clay section container (large radius) ───────────────── */
+.clay-section {
+  border-radius: 40px;
+  overflow: hidden;
+}
+
+/* ── Ocultar marca de agua UnicornStudio ─────────────────── */
+a[href*="unicorn.studio"],
+[data-us-watermark] {
+  display: none !important;
+}

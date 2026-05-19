@@ -1,0 +1,49 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env*.local
+
+# Vercel
+.vercel
+
+# Vídeos y archivos grandes
+public/img/*.mp4
+public/img/*.mov
+public/img/*.avi
+
+# ZIP y carpetas de deploy
+*.zip
+/hostinger-dbonita/
+
+# Claude Code
+.claude/
+
+# Assets de trabajo (capturas, imágenes originales sin procesar)
+/img/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
