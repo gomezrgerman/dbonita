@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react'
-import { getBooking, puedeClienteCancelar, updateBookingEstado } from '@/lib/store'
+import { getBookingAsync, updateBookingEstadoAsync } from '@/lib/supabase-store'
 import { enviarCancelacion } from '@/lib/email'
 import { SERVICIOS } from '@/lib/constants'
 import type { Booking } from '@/lib/types'
@@ -32,20 +32,21 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
   const [cancelando, setCancelando] = useState(false)
 
   useEffect(() => {
-    const b = getBooking(params.id)
-    if (!b) { setEstado('no-encontrada'); return }
-    setBooking(b)
-    if (b.estado === 'cancelada') { setEstado('ya-cancelada'); return }
-    if (b.estado === 'completada') { setEstado('completada'); return }
-    const { puede, motivo } = puedeClienteCancelar(params.id)
-    setEstado(puede ? 'pendiente' : 'fuera-plazo')
-    if (!puede && motivo) console.info(motivo)
+    getBookingAsync(params.id).then((b) => {
+      if (!b) { setEstado('no-encontrada'); return }
+      setBooking(b)
+      if (b.estado === 'cancelada') { setEstado('ya-cancelada'); return }
+      if (b.estado === 'completada') { setEstado('completada'); return }
+      const citaDateTime = new Date(`${b.fecha}T${b.hora}:00`)
+      const horasRestantes = (citaDateTime.getTime() - Date.now()) / (1000 * 60 * 60)
+      setEstado(horasRestantes >= 24 ? 'pendiente' : 'fuera-plazo')
+    })
   }, [params.id])
 
   const confirmarCancelacion = async () => {
     if (!booking) return
     setCancelando(true)
-    updateBookingEstado(booking.id, 'cancelada')
+    await updateBookingEstadoAsync(booking.id, 'cancelada')
     await enviarCancelacion(booking, true).catch(() => {})
     setEstado('cancelada-ok')
     setCancelando(false)

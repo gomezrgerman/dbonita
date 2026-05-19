@@ -7,9 +7,12 @@ import {
   Clock, Phone, Mail, ChevronLeft, ChevronRight, Ban,
 } from 'lucide-react'
 import {
-  getBookings, updateBookingEstado, createBooking, getClientes, getHistorialCliente,
   getSlotsBloqueados, crearBloqueo, eliminarBloqueo, NUM_PERSONAL,
 } from '@/lib/store'
+import {
+  getBookingsAsync, updateBookingEstadoAsync, createBookingAsync,
+  getClientesAsync, getHistorialClienteAsync,
+} from '@/lib/supabase-store'
 import { SERVICIOS } from '@/lib/constants'
 import type { Booking, Cliente, SlotBloqueado, EstadoCita } from '@/lib/types'
 
@@ -139,24 +142,27 @@ function ModalNuevaCita({ fechaInicial, onGuardar, onCerrar }: ModalNuevaCitaPro
 
   const servicioSel = SERVICIOS.find((s) => s.id === form.servicioId) ?? SERVICIOS[0]
 
-  const guardar = (e: React.FormEvent) => {
+  const guardar = async (e: React.FormEvent) => {
     e.preventDefault()
     setGuardando(true)
-    createBooking({
-      clienteNombre: form.nombre,
-      clienteEmail: form.email,
-      clienteTelefono: form.telefono,
-      servicios: [servicioSel.id],
-      duracionMinutos: servicioSel.duracionMinutos,
-      fecha: form.fecha,
-      hora: form.hora,
-      notas: form.notas,
-      pagado: form.pagado,
-      importePagado: form.pagado ? form.importePagado : 0,
-      estado: 'pendiente',
-    })
-    setGuardando(false)
-    onGuardar()
+    try {
+      await createBookingAsync({
+        clienteNombre: form.nombre,
+        clienteEmail: form.email,
+        clienteTelefono: form.telefono,
+        servicios: [servicioSel.id],
+        duracionMinutos: servicioSel.duracionMinutos,
+        fecha: form.fecha,
+        hora: form.hora,
+        notas: form.notas,
+        pagado: form.pagado,
+        importePagado: form.pagado ? form.importePagado : 0,
+        estado: 'pendiente',
+      })
+      onGuardar()
+    } finally {
+      setGuardando(false)
+    }
   }
 
   return (
@@ -286,8 +292,8 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
   const [actualizando, setActualizando] = useState<string | null>(null)
   const [modalAbierto, setModalAbierto] = useState(false)
 
-  const cargar = useCallback(() => {
-    setBookings(getBookings())
+  const cargar = useCallback(async () => {
+    setBookings(await getBookingsAsync())
   }, [])
 
   useEffect(() => { cargar() }, [cargar])
@@ -309,10 +315,10 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
     return 'bg-red-400'
   }
 
-  const cambiarEstado = (id: string, estado: EstadoCita) => {
+  const cambiarEstado = async (id: string, estado: EstadoCita) => {
     setActualizando(id)
-    updateBookingEstado(id, estado)
-    cargar()
+    await updateBookingEstadoAsync(id, estado)
+    await cargar()
     onRefresh()
     setTimeout(() => setActualizando(null), 400)
   }
@@ -490,11 +496,12 @@ function VistaClientes() {
   const [historial, setHistorial] = useState<Booking[]>([])
   const [busqueda, setBusqueda] = useState('')
 
-  useEffect(() => { setClientes(getClientes()) }, [])
+  useEffect(() => { getClientesAsync().then(setClientes) }, [])
 
-  const seleccionarCliente = (c: Cliente) => {
+  const seleccionarCliente = async (c: Cliente) => {
     setClienteActivo(c)
-    setHistorial(getHistorialCliente(c.email))
+    const h = await getHistorialClienteAsync(c.email)
+    setHistorial(h)
   }
 
   const clientesFiltrados = clientes.filter(

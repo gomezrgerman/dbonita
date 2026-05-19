@@ -1,18 +1,25 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, ChevronRight, Clock, CheckCircle, ArrowLeft,
-  ArrowRight, Plus, Minus, X, Sparkles, ShoppingCart, AlertCircle,
+  ArrowRight, Plus, Minus, X, Sparkles, ShoppingCart, AlertCircle, CreditCard,
 } from 'lucide-react'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import {
   SERVICIOS, CATEGORIAS_SERVICIOS, SUGERENCIAS, MENSAJES_CRUZADA,
   type Servicio,
 } from '@/lib/constants'
-import { createBooking, getPlazasOcupadas, isDiaCompleto, NUM_PERSONAL } from '@/lib/store'
+import { isDiaCompleto, getSlotsBloqueados, NUM_PERSONAL } from '@/lib/store'
+import { createBookingAsync, getHorasOcupadasByFechaAsync } from '@/lib/supabase-store'
 import { enviarConfirmacion } from '@/lib/email'
 import type { Booking as BookingType } from '@/lib/types'
+
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+  : null
 
 const HORARIO = [
   { apertura: 10 * 60, cierre: 14 * 60 },
@@ -43,13 +50,9 @@ function generarSlots(duracionMin: number): string[] {
   return slots
 }
 
-function filtrarSlotsLlenos(slots: string[], duracionMin: number, fecha: string): string[] {
-  return slots.filter((slot) => {
-    const [h, m] = slot.split(':').map(Number)
-    const inicio = h * 60 + m
-    const fin = inicio + duracionMin
-    return getPlazasOcupadas(fecha, inicio, fin) < NUM_PERSONAL
-  })
+function timeToMin(t: string): number {
+  const [h, m] = t.split(':').map(Number)
+  return h * 60 + m
 }
 
 function getDiasDelMes(year: number, month: number): (number | null)[] {
@@ -84,7 +87,7 @@ function parsePrecio(precio: string): number {
   return isNaN(num) ? 0 : num
 }
 
-type Paso = 'servicios' | 'calendario' | 'datos' | 'confirmado'
+type Paso = 'servicios' | 'calendario' | 'datos' | 'pago' | 'confirmado'
 
 interface FormData {
   nombre: string
@@ -97,10 +100,11 @@ const PASOS_INFO = [
   { key: 'servicios', label: 'Servicios' },
   { key: 'calendario', label: 'Fecha y hora' },
   { key: 'datos', label: 'Datos' },
+  { key: 'pago', label: 'Pago' },
 ]
 
 function StepIndicator({ paso }: { paso: Paso }) {
-  const orden = ['servicios', 'calendario', 'datos', 'confirmado']
+  const orden = ['servicios', 'calendario', 'datos', 'pago', 'confirmado']
   const actual = orden.indexOf(paso)
   return (
     <div className="flex items-center gap-0 mb-10 lg:mb-12" role="list" aria-label="Pasos del proceso de reserva">
@@ -143,8 +147,122 @@ function StepIndicator({ paso }: { paso: Paso }) {
   )
 }
 
+// ─── PagoForm — debe estar dentro de <Elements> para usar useStripe/useElements ──
+
+interface PagoFormProps {
+  form: FormData
+  carrito: string[]
+  fechaStr: string
+  horaSeleccionada: string
+  duracionTotal: number
+  onExito: (booking: BookingType) => void
+}
+
+function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, onExito }: PagoFormProps) {
+  const stripe = useStripe()
+  const elements = useElements()
+  const [pagando, setPagando] = useState(false)
+  const [errorPago, setErrorPago] = useState<string | null>(null)
+  const [elementoCompleto, setElementoCompleto] = useState(false)
+
+  const pagar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!stripe || !elements) return
+    setPagando(true)
+    setErrorPago(null)
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: typeof window !== 'undefined' ? window.location.origin : '',
+        payment_method_data: {
+          billing_details: {
+            name: form.nombre,
+            email: form.email || undefined,
+            phone: form.telefono || undefined,
+          },
+        },
+      },
+      redirect: 'if_required',
+    })
+
+    if (error) {
+      setErrorPago(error.message ?? 'Error al procesar el pago.')
+      setPagando(false)
+      return
+    }
+
+    // Pago confirmado — crear reserva en Supabase
+    try {
+      const booking = await createBookingAsync({
+        clienteNombre: form.nombre,
+        clienteEmail: form.email,
+        clienteTelefono: form.telefono,
+        servicios: carrito,
+        duracionMinutos: duracionTotal,
+        fecha: fechaStr,
+        hora: horaSeleccionada,
+        notas: form.notas,
+        importePagado: 10,
+        pagado: true,
+        estado: 'confirmada',
+      })
+      onExito(booking)
+    } catch {
+      setErrorPago('Pago realizado pero hubo un error al guardar la cita. Contáctanos por WhatsApp.')
+      setPagando(false)
+    }
+  }
+
+  return (
+    <form onSubmit={pagar} className="flex flex-col gap-5">
+      <PaymentElement
+        options={{ layout: 'tabs' }}
+        onChange={(e) => setElementoCompleto(e.complete)}
+      />
+
+      {errorPago && (
+        <div
+          className="clay-card p-4 flex items-start gap-3"
+          style={{ borderRadius: '12px', borderColor: 'var(--color-pomegranate)' }}
+        >
+          <AlertCircle size={16} className="shrink-0 mt-0.5" style={{ color: 'var(--color-pomegranate)' }} />
+          <p className="text-sm text-black" style={{ fontWeight: 400 }}>{errorPago}</p>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={pagando || !stripe || !elements || !elementoCompleto}
+        className="w-full py-4 rounded-card text-sm transition-all duration-300"
+        style={{
+          fontWeight: 700,
+          background: pagando || !stripe || !elements || !elementoCompleto ? 'var(--color-accent)' : '#000',
+          color: pagando || !stripe || !elements || !elementoCompleto ? 'var(--color-text-muted)' : '#fff',
+          cursor: pagando || !stripe || !elements || !elementoCompleto ? 'not-allowed' : 'pointer',
+        }}
+        onMouseEnter={(e) => {
+          if (!pagando && stripe && elements && elementoCompleto) {
+            e.currentTarget.style.transform = 'rotateZ(-2deg) translateY(-3px)'
+            e.currentTarget.style.boxShadow = 'rgb(0,0,0) -5px 5px'
+            e.currentTarget.style.background = 'var(--color-pomegranate)'
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = ''
+          e.currentTarget.style.boxShadow = ''
+          e.currentTarget.style.background = pagando || !stripe || !elements || !elementoCompleto ? 'var(--color-accent)' : '#000'
+        }}
+      >
+        {pagando ? 'Procesando pago...' : 'Pagar señal — 10 €'}
+      </button>
+    </form>
+  )
+}
+
 export default function Booking() {
   const hoy = new Date()
+  const sectionRef = useRef<HTMLElement>(null)
   const [paso, setPaso] = useState<Paso>('servicios')
   const [carrito, setCarrito] = useState<string[]>([])
   const [mes, setMes] = useState(hoy.getMonth())
@@ -154,6 +272,9 @@ export default function Booking() {
   const [form, setForm] = useState<FormData>({ nombre: '', telefono: '', email: '', notas: '' })
   const [enviando, setEnviando] = useState(false)
   const [reservaGuardada, setReservaGuardada] = useState<BookingType | null>(null)
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [horasOcupadas, setHorasOcupadas] = useState<Array<{ inicio: number; fin: number }>>([])
+  const [cargandoSlots, setCargandoSlots] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [catAbierta, setCatAbierta] = useState<string | null>(null)
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false)
@@ -215,6 +336,19 @@ export default function Booking() {
 
   const fechaStr = diaSeleccionado ? toFechaStr(año, mes, diaSeleccionado) : ''
 
+  useEffect(() => {
+    if (!fechaStr) { setHorasOcupadas([]); return }
+    setCargandoSlots(true)
+    getHorasOcupadasByFechaAsync(fechaStr)
+      .then(setHorasOcupadas)
+      .finally(() => setCargandoSlots(false))
+  }, [fechaStr])
+
+  useEffect(() => {
+    if (paso === 'servicios') return
+    sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [paso])
+
   const slotsBase = useMemo(
     () => (duracionTotal > 0 ? generarSlots(duracionTotal) : []),
     [duracionTotal]
@@ -223,8 +357,20 @@ export default function Booking() {
   const slotsDisponibles = useMemo(() => {
     if (duracionTotal === 0 || !fechaStr) return slotsBase
     if (isDiaCompleto(fechaStr)) return []
-    return filtrarSlotsLlenos(slotsBase, duracionTotal, fechaStr)
-  }, [duracionTotal, fechaStr, slotsBase])
+    if (cargandoSlots) return []
+    return slotsBase.filter((slot) => {
+      const inicio = timeToMin(slot)
+      const fin = inicio + duracionTotal
+      const reservas = horasOcupadas.filter((o) => inicio < o.fin && fin > o.inicio).length
+      const bloqueados = getSlotsBloqueados()
+        .filter((b) => b.fecha === fechaStr)
+        .filter((b) => {
+          if (b.horaInicio === 'todo-el-dia') return true
+          return inicio < timeToMin(b.horaFin) && fin > timeToMin(b.horaInicio)
+        }).length
+      return reservas + bloqueados < NUM_PERSONAL
+    })
+  }, [duracionTotal, fechaStr, slotsBase, horasOcupadas, cargandoSlots])
 
   const diasMes = getDiasDelMes(año, mes)
   const fechaFormateada = diaSeleccionado
@@ -259,6 +405,7 @@ export default function Booking() {
   const volver = () => {
     if (paso === 'calendario') setPaso('servicios')
     else if (paso === 'datos') setPaso('calendario')
+    else if (paso === 'pago') { setClientSecret(null); setPaso('datos') }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -267,27 +414,30 @@ export default function Booking() {
     setEnviando(true)
     setError(null)
     try {
-      const booking = createBooking({
-        clienteNombre: form.nombre,
-        clienteEmail: form.email,
-        clienteTelefono: form.telefono,
-        servicios: carrito,
-        duracionMinutos: duracionTotal,
-        fecha: fechaStr,
-        hora: horaSeleccionada,
-        notas: form.notas,
-        importePagado: 10,
-        pagado: true,
-        estado: 'confirmada',
+      const res = await fetch('/api/checkout/intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: form.nombre,
+          email: form.email,
+          servicioDesc: serviciosEnCarrito.map((s) => s.nombre).join(' + '),
+        }),
       })
-      setReservaGuardada(booking)
-      await enviarConfirmacion(booking).catch(() => {})
-      setPaso('confirmado')
+      const data = await res.json()
+      if (!res.ok || !data.clientSecret) throw new Error(data.error ?? 'Error al iniciar el pago')
+      setClientSecret(data.clientSecret)
+      setPaso('pago')
     } catch {
-      setError('Ha ocurrido un error al guardar la reserva. Inténtalo de nuevo.')
+      setError('No se pudo iniciar el pago. Inténtalo de nuevo.')
     } finally {
       setEnviando(false)
     }
+  }
+
+  const handlePagoExito = async (booking: BookingType) => {
+    setReservaGuardada(booking)
+    await enviarConfirmacion(booking).catch(() => {})
+    setPaso('confirmado')
   }
 
   const resetear = () => {
@@ -295,11 +445,11 @@ export default function Booking() {
     setDiaSeleccionado(null); setHoraSeleccionada(null)
     setForm({ nombre: '', telefono: '', email: '', notas: '' })
     setMes(hoy.getMonth()); setAño(hoy.getFullYear())
-    setReservaGuardada(null)
+    setReservaGuardada(null); setClientSecret(null)
   }
 
   return (
-    <section id="servicios" className="section-padding bg-bg" aria-label="Reservar cita">
+    <section ref={sectionRef} id="servicios" className="section-padding bg-bg" aria-label="Reservar cita">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
 
         {/* Cabecera */}
@@ -324,7 +474,7 @@ export default function Booking() {
 
         {paso !== 'confirmado' && <StepIndicator paso={paso} />}
 
-        {(paso === 'calendario' || paso === 'datos') && (
+        {(paso === 'calendario' || paso === 'datos' || paso === 'pago') && (
           <button
             onClick={volver}
             className="flex items-center gap-2 text-xs text-text-muted mb-6 transition-colors duration-200 hover:text-black"
@@ -895,9 +1045,78 @@ export default function Booking() {
                     e.currentTarget.style.background = !form.nombre || !form.telefono || !form.email ? 'var(--color-accent)' : '#000'
                   }}
                 >
-                  {enviando ? 'Confirmando reserva...' : 'Confirmar mi cita — 10€ señal'}
+                  {enviando ? 'Preparando pago...' : 'Ir al pago — señal 10 €'}
                 </button>
               </form>
+            </motion.div>
+          )}
+
+          {/* ── PASO 4: Pago ── */}
+          {paso === 'pago' && clientSecret && stripePromise && (
+            <motion.div
+              key="pago"
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.35 }}
+              className="max-w-2xl flex flex-col gap-6"
+            >
+              {/* Resumen de la cita */}
+              <div
+                className="clay-card p-4 flex flex-col gap-2"
+                style={{ borderRadius: '16px', background: '#f5f0ff', borderColor: 'var(--color-ube-light)' }}
+              >
+                <span className="label-upper text-text-muted">Tu cita</span>
+                <p className="text-base text-black" style={{ fontWeight: 700 }}>
+                  {fechaFormateada} · {horaSeleccionada}
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  {serviciosEnCarrito.map((s) => (
+                    <p key={s.id} className="text-xs text-text-muted" style={{ fontWeight: 400 }}>
+                      {s.nombre} · {s.duracion} · {s.precio}
+                    </p>
+                  ))}
+                </div>
+              </div>
+
+              {/* Info de la señal */}
+              <div className="clay-card p-4 flex items-start gap-3" style={{ borderRadius: '14px' }}>
+                <CreditCard size={18} className="shrink-0 mt-0.5 text-black" aria-hidden="true" />
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm text-black" style={{ fontWeight: 700 }}>Señal de reserva — 10 €</p>
+                  <p className="text-xs text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
+                    El cargo de <strong className="text-black" style={{ fontWeight: 700 }}>10 €</strong> confirma tu cita.
+                    El resto se abona en el estudio. Cancelación gratuita hasta 24 h antes.
+                  </p>
+                </div>
+              </div>
+
+              {/* Stripe Payment Element */}
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  clientSecret,
+                  locale: 'es',
+                  appearance: {
+                    theme: 'stripe',
+                    variables: {
+                      colorPrimary: '#000000',
+                      colorBackground: '#ffffff',
+                      colorText: '#2C2420',
+                      colorDanger: '#E63946',
+                      fontFamily: '"Jost", "DM Sans", sans-serif',
+                      borderRadius: '12px',
+                    },
+                  },
+                }}
+              >
+                <PagoForm
+                  form={form}
+                  carrito={carrito}
+                  fechaStr={fechaStr}
+                  horaSeleccionada={horaSeleccionada!}
+                  duracionTotal={duracionTotal}
+                  onExito={handlePagoExito}
+                />
+              </Elements>
             </motion.div>
           )}
 
