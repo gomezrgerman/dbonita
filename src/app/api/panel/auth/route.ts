@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
   const { password } = await req.json()
-  const correct = process.env.PANEL_PASSWORD ?? 'dbonita2025'
+  const correct = process.env.PANEL_PASSWORD ?? 'dbonita2026'
 
   if (password === correct) {
     return NextResponse.json({ ok: true })

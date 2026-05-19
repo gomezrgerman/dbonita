@@ -112,7 +112,7 @@ export default function Footer() {
           {/* Copyright */}
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)', fontWeight: 400 }}>
-              © 2025 {SITE_NAME} — Todos los derechos reservados
+              © 2026 {SITE_NAME} — Todos los derechos reservados
             </p>
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.15)', fontWeight: 400 }}>
               Tu centro de estética de confianza en Dénia

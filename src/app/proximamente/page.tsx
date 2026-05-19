@@ -121,7 +121,7 @@ export default function Proximamente() {
 
         {/* Footer */}
         <p className="label-upper" style={{ color: 'var(--color-accent)' }}>
-          © 2025 D Bonita — Todos los derechos reservados
+          © 2026 D Bonita — Todos los derechos reservados
         </p>
 
       </div>
