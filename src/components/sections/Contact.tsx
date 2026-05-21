@@ -165,27 +165,28 @@ export default function Contact() {
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             className="relative"
           >
-            <div className="bg-surface aspect-[4/3] lg:aspect-auto lg:h-full min-h-80 flex flex-col items-center justify-center gap-4 border border-accent">
-              <MapPin size={32} className="text-primary" aria-hidden="true" />
-              <div className="text-center px-6">
-                <p className="font-sans text-xl text-text" style={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
-                  D Bonita · Dénia
-                </p>
-                <p className="font-sans text-sm text-text-muted mt-1" style={{ fontWeight: 400 }}>
-                  Carrer del Cop, 5 · Piso 1 puerta 2
-                </p>
-                <p className="font-sans text-sm text-text-muted" style={{ fontWeight: 400 }}>
-                  03700 Dénia, Alicante
-                </p>
-              </div>
+            <div className="relative overflow-hidden border border-accent" style={{ borderRadius: '24px', minHeight: '380px' }}>
+              <iframe
+                src="https://maps.google.com/maps?q=Carrer+del+Cop+5+Denia+Alicante+España&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0, position: 'absolute', inset: 0, minHeight: '380px' }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Ubicación de D Bonita en Google Maps"
+                aria-label="Mapa de ubicación de D Bonita, Carrer del Cop 5, Dénia"
+              />
+              {/* Botón superpuesto */}
               <a
                 href="https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn-secondary text-xs mt-2"
-                aria-label="Ver D Bonita en Google Maps"
+                className="absolute bottom-4 right-4 btn-secondary text-xs shadow-clay"
+                aria-label="Abrir en Google Maps"
               >
-                Ver en Google Maps
+                <MapPin size={12} aria-hidden="true" />
+                Abrir en Maps
               </a>
             </div>
           </motion.div>
