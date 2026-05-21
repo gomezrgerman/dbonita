@@ -108,8 +108,27 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
               <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-left w-full">
                 <p className="text-sm text-red-700 leading-relaxed">
                   Tu cita es en menos de <strong>24 horas</strong>. La señal de{' '}
-                  <strong>{booking.importePagado}€</strong> no es reembolsable pasado este plazo.
+                  <strong>{booking.importePagado}€</strong> no es reembolsable pasado este plazo según nuestra política de cancelación.
                 </p>
+              </div>
+              <p className="text-sm text-text-muted">
+                Si tienes una circunstancia especial, contáctanos directamente:
+              </p>
+              <div className="flex flex-col gap-2 w-full">
+                <a
+                  href="https://wa.me/34657332722?text=Hola, tengo una cita mañana y necesito cancelarla"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 bg-green-500 text-white text-sm rounded-xl font-medium hover:bg-green-600 transition-colors text-center"
+                >
+                  Escribir por WhatsApp
+                </a>
+                <a
+                  href="tel:+34657332722"
+                  className="w-full py-3 border border-accent text-center text-sm text-text-muted rounded-xl hover:border-black transition-colors"
+                >
+                  Llamar al +34 657 33 27 22
+                </a>
               </div>
             </div>
           )}

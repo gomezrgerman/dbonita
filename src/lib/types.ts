@@ -15,6 +15,7 @@ export interface Booking {
   importePagado: number
   creadoEn: string     // ISO timestamp
   canceladoEn?: string
+  stripePaymentIntentId?: string
 }
 
 export interface Cliente {

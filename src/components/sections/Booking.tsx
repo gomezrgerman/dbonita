@@ -14,7 +14,7 @@ import {
 } from '@/lib/constants'
 import { NUM_PERSONAL } from '@/lib/store'
 import { createBookingAsync, getHorasOcupadasByFechaAsync, getSlotsBloqueadosAsync } from '@/lib/supabase-store'
-import { enviarConfirmacion } from '@/lib/email'
+import { enviarConfirmacion, enviarNotificacionNegocio } from '@/lib/email'
 import type { Booking as BookingType } from '@/lib/types'
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -472,7 +472,10 @@ export default function Booking() {
 
   const handlePagoExito = async (booking: BookingType) => {
     setReservaGuardada(booking)
-    await enviarConfirmacion(booking).catch(() => {})
+    await Promise.allSettled([
+      enviarConfirmacion(booking),
+      enviarNotificacionNegocio(booking),
+    ])
     setPaso('confirmado')
   }
 
@@ -1153,6 +1156,19 @@ export default function Booking() {
                   onExito={handlePagoExito}
                 />
               </Elements>
+
+              <p className="text-xs text-text-muted text-center" style={{ fontWeight: 400 }}>
+                ¿Tienes algún problema?{' '}
+                <a
+                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'}?text=Hola, necesito ayuda con mi reserva`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-black underline underline-offset-2"
+                  style={{ fontWeight: 600 }}
+                >
+                  Escríbenos por WhatsApp
+                </a>
+              </p>
             </motion.div>
           )}
 

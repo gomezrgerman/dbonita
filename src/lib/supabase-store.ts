@@ -1,6 +1,73 @@
 import { supabase } from './supabase'
 import { SERVICIOS } from './constants'
-import type { Booking, Cliente, EstadoCita } from './types'
+import type { Booking, Cliente, EstadoCita, SlotBloqueado } from './types'
+
+// ─── Bloqueos (Supabase) ───────────────────────────────────
+
+interface BloqueoRow {
+  id: string
+  fecha: string
+  hora_inicio: string
+  hora_fin: string
+  motivo: string | null
+  afecta: string | null
+  created_at: string
+}
+
+function rowToBloqueo(row: BloqueoRow): SlotBloqueado {
+  return {
+    id: row.id,
+    fecha: row.fecha,
+    horaInicio: row.hora_inicio,
+    horaFin: row.hora_fin,
+    motivo: row.motivo ?? '',
+    afecta: (row.afecta ?? 'negocio') as 'negocio' | 'trabajadora',
+    creadoEn: row.created_at,
+  }
+}
+
+export async function getSlotsBloqueadosAsync(): Promise<SlotBloqueado[]> {
+  const { data, error } = await supabase
+    .from('bloqueos')
+    .select('*')
+    .order('fecha', { ascending: true })
+  if (error) { console.error('getSlotsBloqueadosAsync:', error); return [] }
+  return (data as BloqueoRow[]).map(rowToBloqueo)
+}
+
+export async function crearBloqueoAsync(
+  input: Omit<SlotBloqueado, 'id' | 'creadoEn'>
+): Promise<SlotBloqueado> {
+  const { data, error } = await supabase
+    .from('bloqueos')
+    .insert({
+      fecha: input.fecha,
+      hora_inicio: input.horaInicio,
+      hora_fin: input.horaFin,
+      motivo: input.motivo || null,
+      afecta: input.afecta ?? 'negocio',
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return rowToBloqueo(data as BloqueoRow)
+}
+
+export async function eliminarBloqueoAsync(id: string): Promise<void> {
+  const { error } = await supabase.from('bloqueos').delete().eq('id', id)
+  if (error) console.error('eliminarBloqueoAsync:', error)
+}
+
+export async function isDiaCompletoAsync(fecha: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('bloqueos')
+    .select('id')
+    .eq('fecha', fecha)
+    .eq('hora_inicio', 'todo-el-dia')
+    .in('afecta', ['negocio', null])
+    .maybeSingle()
+  return data !== null
+}
 
 // ─── Row type matching the Supabase reservas table ────────
 interface ReservaRow {
@@ -18,6 +85,7 @@ interface ReservaRow {
   importe_pagado: number | null
   pagado: boolean | null
   cancelado_en: string | null
+  stripe_payment_intent_id: string | null
 }
 
 function computeDuracion(servicios: string[]): number {
@@ -53,6 +121,7 @@ function rowToBooking(row: ReservaRow): Booking {
     importePagado: row.importe_pagado ?? 10,
     creadoEn: row.created_at,
     ...(row.cancelado_en ? { canceladoEn: row.cancelado_en } : {}),
+    ...(row.stripe_payment_intent_id ? { stripePaymentIntentId: row.stripe_payment_intent_id } : {}),
   }
 }
 
@@ -78,7 +147,7 @@ export async function getBookingAsync(id: string): Promise<Booking | null> {
 }
 
 export async function createBookingAsync(
-  input: Omit<Booking, 'id' | 'creadoEn'> & { estado?: EstadoCita }
+  input: Omit<Booking, 'id' | 'creadoEn'> & { estado?: EstadoCita; stripePaymentIntentId?: string }
 ): Promise<Booking> {
   const { data, error } = await supabase
     .from('reservas')
@@ -94,6 +163,7 @@ export async function createBookingAsync(
       duracion_minutos: input.duracionMinutos,
       importe_pagado: input.importePagado,
       pagado: input.pagado,
+      stripe_payment_intent_id: input.stripePaymentIntentId ?? null,
     })
     .select()
     .single()
@@ -117,22 +187,56 @@ export async function updateBookingEstadoAsync(
   return rowToBooking(data as ReservaRow)
 }
 
+function timeToMin(t: string): number {
+  const [h, m] = t.split(':').map(Number)
+  return h * 60 + m
+}
+
 export async function getHorasOcupadasByFechaAsync(
   fecha: string
-): Promise<Array<{ inicio: number; fin: number }>> {
-  const { data, error } = await supabase
-    .from('reservas')
-    .select('hora, duracion_minutos, servicio')
-    .eq('fecha', fecha)
-    .neq('estado', 'cancelada')
-  if (error) { console.error('getHorasOcupadasByFechaAsync:', error); return [] }
-  return (data as Pick<ReservaRow, 'hora' | 'duracion_minutos' | 'servicio'>[]).map((row) => {
-    const [h, m] = row.hora.split(':').map(Number)
-    const inicio = h * 60 + m
+): Promise<{ rangos: Array<{ inicio: number; fin: number }>; diaCompleto: boolean }> {
+  const [reservasResult, bloqueosResult] = await Promise.all([
+    supabase
+      .from('reservas')
+      .select('hora, duracion_minutos, servicio')
+      .eq('fecha', fecha)
+      .neq('estado', 'cancelada'),
+    supabase
+      .from('bloqueos')
+      .select('*')
+      .eq('fecha', fecha),
+  ])
+
+  if (reservasResult.error) console.error('getHorasOcupadasByFechaAsync reservas:', reservasResult.error)
+  if (bloqueosResult.error) console.error('getHorasOcupadasByFechaAsync bloqueos:', bloqueosResult.error)
+
+  const bloqueos = ((bloqueosResult.data ?? []) as BloqueoRow[]).map(rowToBloqueo)
+
+  const diaCompleto = bloqueos.some(
+    (b) => b.horaInicio === 'todo-el-dia' && (b.afecta === 'negocio' || !b.afecta)
+  )
+
+  const reservasRangos = ((reservasResult.data ?? []) as Pick<ReservaRow, 'hora' | 'duracion_minutos' | 'servicio'>[]).map((row) => {
+    const inicio = timeToMin(row.hora)
     const servicios = parseServicios(row.servicio)
     const duracion = row.duracion_minutos ?? computeDuracion(servicios)
     return { inicio, fin: inicio + duracion }
   })
+
+  const bloqueosRangos: Array<{ inicio: number; fin: number }> = []
+  for (const b of bloqueos) {
+    if (b.horaInicio === 'todo-el-dia') continue
+    const inicio = timeToMin(b.horaInicio)
+    const fin = timeToMin(b.horaFin)
+    if (b.afecta === 'trabajadora') {
+      bloqueosRangos.push({ inicio, fin })
+    } else {
+      // negocio: bloquea ambas plazas
+      bloqueosRangos.push({ inicio, fin }, { inicio, fin })
+    }
+  }
+
+  return { rangos: [...reservasRangos, ...bloqueosRangos], diaCompleto }
 }
 
 // ─── Clientes (derived from reservas) ────────────────────

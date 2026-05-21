@@ -109,14 +109,31 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Copyright */}
+          {/* Copyright + legal */}
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)', fontWeight: 400 }}>
               © 2026 {SITE_NAME} — Todos los derechos reservados
             </p>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.15)', fontWeight: 400 }}>
-              Tu centro de estética de confianza en Dénia
-            </p>
+            <div className="flex items-center gap-4">
+              <a
+                href="/privacidad"
+                className="text-xs transition-colors duration-200"
+                style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
+              >
+                Privacidad
+              </a>
+              <a
+                href="/aviso-legal"
+                className="text-xs transition-colors duration-200"
+                style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
+              >
+                Aviso Legal
+              </a>
+            </div>
           </div>
         </div>
       </div>

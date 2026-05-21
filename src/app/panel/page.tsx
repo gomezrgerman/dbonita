@@ -3,15 +3,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Calendar, Users, Lock, LogOut, Plus, Trash2, Check, X,
+  Calendar, Users, LogOut, Plus, Trash2, Check, X,
   Clock, Phone, Mail, ChevronLeft, ChevronRight, Ban,
+  BarChart2, ExternalLink, AlertTriangle,
 } from 'lucide-react'
-import {
-  getSlotsBloqueados, crearBloqueo, eliminarBloqueo, NUM_PERSONAL,
-} from '@/lib/store'
+import { NUM_PERSONAL } from '@/lib/store'
 import {
   getBookingsAsync, updateBookingEstadoAsync, createBookingAsync,
   getClientesAsync, getHistorialClienteAsync,
+  getSlotsBloqueadosAsync, crearBloqueoAsync, eliminarBloqueoAsync,
 } from '@/lib/supabase-store'
 import { SERVICIOS } from '@/lib/constants'
 import type { Booking, Cliente, SlotBloqueado, EstadoCita } from '@/lib/types'
@@ -37,6 +37,9 @@ function formatFecha(fecha: string) {
   const [y, m, d] = fecha.split('-')
   return `${parseInt(d)} ${MESES[parseInt(m) - 1].slice(0,3)} ${y}`
 }
+function resolverServiciosStr(ids: string[]): string {
+  return ids.map((id) => SERVICIOS.find((s) => s.id === id)?.nombre ?? id).join(', ')
+}
 
 const ESTADO_ESTILOS: Record<EstadoCita, string> = {
   pendiente:  'bg-yellow-50 text-yellow-700 border-yellow-200',
@@ -48,77 +51,63 @@ const ESTADO_LABEL: Record<EstadoCita, string> = {
   pendiente: 'Pendiente', confirmada: 'Confirmada', cancelada: 'Cancelada', completada: 'Completada',
 }
 
-// ─── Login ────────────────────────────────────────────────
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
-  const [pass, setPass] = useState('')
-  const [error, setError] = useState(false)
-  const [cargando, setCargando] = useState(false)
+// ─── Diálogo de confirmación para cancelar ────────────────
+interface ConfirmCancelDialogProps {
+  booking: Booking
+  onConfirm: () => void
+  onCerrar: () => void
+}
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setCargando(true)
-    try {
-      const res = await fetch('/api/panel/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pass }),
-      })
-      if (res.ok) {
-        onLogin()
-      } else {
-        setError(true)
-        setPass('')
-      }
-    } catch {
-      setError(true)
-      setPass('')
-    } finally {
-      setCargando(false)
-    }
-  }
-
+function ConfirmCancelDialog({ booking, onConfirm, onCerrar }: ConfirmCancelDialogProps) {
+  const tienePago = booking.importePagado > 0
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center px-6">
+    <div className="fixed inset-0 bg-text/50 z-50 flex items-center justify-center px-4" onClick={onCerrar}>
       <motion.div
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm flex flex-col gap-8"
+        initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+        className="bg-white w-full max-w-sm p-6 flex flex-col gap-4"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div>
-          <h1 className="font-display text-4xl font-light text-text">
-            <span className="text-primary">D</span>
-            <span className="text-blue"> Bonita</span>
-          </h1>
-          <p className="font-sans text-sm font-light text-text-muted mt-1">Panel de administración</p>
+        <div className="flex items-center gap-3">
+          <AlertTriangle size={20} className="text-red-500 shrink-0" />
+          <h2 className="font-display text-xl font-light text-text">Cancelar cita</h2>
         </div>
-
-        <form onSubmit={submit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <label htmlFor="password" className="font-sans text-xs font-light tracking-widest uppercase text-text-muted">
-              Contraseña
-            </label>
-            <div className="relative">
-              <Lock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
-              <input
-                id="password" type="password" autoFocus required
-                value={pass}
-                onChange={(e) => { setPass(e.target.value); setError(false) }}
-                className={`w-full bg-surface border px-4 py-3 pl-10 font-sans text-sm font-light text-text focus:outline-none transition-colors duration-200
-                  ${error ? 'border-red-300 focus:border-red-400' : 'border-accent focus:border-primary'}`}
-                placeholder="••••••••"
-              />
-            </div>
-            {error && (
-              <p className="font-sans text-xs font-light text-red-500">Contraseña incorrecta</p>
-            )}
+        <p className="font-sans text-sm font-light text-text-muted leading-relaxed">
+          ¿Confirmas que quieres cancelar la cita de{' '}
+          <strong className="text-text font-medium">{booking.clienteNombre}</strong> el{' '}
+          {formatFecha(booking.fecha)} a las {booking.hora}?
+        </p>
+        {tienePago && (
+          <div className="bg-orange-50 border border-orange-200 p-4 flex flex-col gap-1">
+            <p className="font-sans text-xs font-medium text-orange-700">
+              Esta clienta pagó {booking.importePagado}€ de señal
+            </p>
+            <p className="font-sans text-xs font-light text-orange-600 leading-relaxed">
+              El reembolso no es automático. Si corresponde, procésalo manualmente desde tu{' '}
+              <a
+                href="https://dashboard.stripe.com/payments"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 font-medium"
+              >
+                cuenta de Stripe
+              </a>.
+            </p>
           </div>
+        )}
+        <div className="flex gap-3 pt-1">
           <button
-            type="submit"
-            disabled={cargando}
-            className="bg-primary text-white py-3 font-sans text-sm font-light tracking-widest uppercase hover:bg-primary-dark transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={onConfirm}
+            className="flex-1 py-2.5 bg-red-500 text-white font-sans text-xs font-light tracking-widest uppercase hover:bg-red-600 transition-colors"
           >
-            {cargando ? 'Verificando...' : 'Entrar'}
+            Sí, cancelar
           </button>
-        </form>
+          <button
+            onClick={onCerrar}
+            className="px-5 py-2.5 border border-accent font-sans text-xs font-light text-text-muted hover:border-primary hover:text-primary transition-colors"
+          >
+            Volver
+          </button>
+        </div>
       </motion.div>
     </div>
   )
@@ -186,7 +175,6 @@ function ModalNuevaCita({ fechaInicial, onGuardar, onCerrar }: ModalNuevaCitaPro
         </div>
 
         <form onSubmit={guardar} className="flex flex-col gap-4">
-          {/* Datos cliente */}
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 flex flex-col gap-1.5">
               <label className="font-sans text-xs font-light tracking-widest uppercase text-text-muted">Nombre *</label>
@@ -211,7 +199,6 @@ function ModalNuevaCita({ fechaInicial, onGuardar, onCerrar }: ModalNuevaCitaPro
             </div>
           </div>
 
-          {/* Servicio, fecha, hora */}
           <div className="flex flex-col gap-1.5">
             <label className="font-sans text-xs font-light tracking-widest uppercase text-text-muted">Servicio *</label>
             <select value={form.servicioId}
@@ -246,7 +233,6 @@ function ModalNuevaCita({ fechaInicial, onGuardar, onCerrar }: ModalNuevaCitaPro
               className="bg-surface border border-accent px-3 py-2.5 font-sans text-sm font-light text-text focus:outline-none focus:border-primary transition-colors resize-none" />
           </div>
 
-          {/* Pago */}
           <div className="border border-accent p-4 flex flex-col gap-3">
             <div className="flex items-center gap-3">
               <input type="checkbox" id="pagado-check" checked={form.pagado}
@@ -291,6 +277,7 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [actualizando, setActualizando] = useState<string | null>(null)
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState<Booking | null>(null)
 
   const cargar = useCallback(async () => {
     setBookings(await getBookingsAsync())
@@ -384,7 +371,6 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
           </div>
         </div>
 
-        {/* Resumen de ocupación del día */}
         {citasDelDia.length > 0 && (
           <div className="bg-white border border-accent px-5 py-3 flex items-center gap-3">
             <div className="flex gap-1">
@@ -397,7 +383,7 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
               ))}
             </div>
             <p className="font-sans text-xs font-light text-text-muted">
-              {citasDelDia.length} de {NUM_PERSONAL} plazas ocupadas hoy
+              {Math.min(citasDelDia.length, NUM_PERSONAL)} de {NUM_PERSONAL} plazas ocupadas hoy
             </p>
           </div>
         )}
@@ -415,14 +401,21 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-display text-2xl font-light text-primary">{b.hora}</span>
                     <span className={`font-sans text-xs px-2 py-0.5 border ${ESTADO_ESTILOS[b.estado]}`}>
                       {ESTADO_LABEL[b.estado]}
                     </span>
+                    {b.importePagado > 0 && (
+                      <span className="font-sans text-xs px-2 py-0.5 bg-green-50 text-green-700 border border-green-200">
+                        {b.importePagado}€ pagados
+                      </span>
+                    )}
                   </div>
                   <p className="font-sans text-sm font-medium text-text">{b.clienteNombre}</p>
-                  <p className="font-sans text-xs font-light text-text-muted">{b.servicios.join(', ')} · {b.duracionMinutos} min</p>
+                  <p className="font-sans text-xs font-light text-text-muted">
+                    {resolverServiciosStr(b.servicios)} · {b.duracionMinutos} min
+                  </p>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0 text-right">
                   <a href={`tel:${b.clienteTelefono}`} className="flex items-center gap-1.5 font-sans text-xs font-light text-text-muted hover:text-primary transition-colors">
@@ -439,7 +432,6 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
                 </div>
               </div>
 
-              {/* Acciones */}
               {b.estado !== 'cancelada' && b.estado !== 'completada' && (
                 <div className="flex items-center gap-2 pt-3 border-t border-accent">
                   {b.estado === 'pendiente' && (
@@ -461,7 +453,7 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
                     Completada
                   </button>
                   <button
-                    onClick={() => cambiarEstado(b.id, 'cancelada')}
+                    onClick={() => setConfirmCancel(b)}
                     disabled={actualizando === b.id}
                     className="flex items-center gap-1.5 font-sans text-xs font-light px-3 py-1.5 border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
                   >
@@ -475,13 +467,22 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
         )}
       </div>
 
-      {/* Modal nueva cita */}
       <AnimatePresence>
         {modalAbierto && (
           <ModalNuevaCita
             fechaInicial={diaFiltro}
             onGuardar={() => { cargar(); onRefresh(); setModalAbierto(false) }}
             onCerrar={() => setModalAbierto(false)}
+          />
+        )}
+        {confirmCancel && (
+          <ConfirmCancelDialog
+            booking={confirmCancel}
+            onConfirm={() => {
+              cambiarEstado(confirmCancel.id, 'cancelada')
+              setConfirmCancel(null)
+            }}
+            onCerrar={() => setConfirmCancel(null)}
           />
         )}
       </AnimatePresence>
@@ -574,7 +575,7 @@ function VistaClientes() {
                     .map((b) => (
                       <div key={b.id} className="flex items-center justify-between border-b border-accent pb-2">
                         <div>
-                          <p className="font-sans text-sm font-light text-text">{b.servicios.join(', ')}</p>
+                          <p className="font-sans text-sm font-light text-text">{resolverServiciosStr(b.servicios)}</p>
                           <p className="font-sans text-xs font-light text-text-muted">
                             {formatFecha(b.fecha)} · {b.hora}
                           </p>
@@ -604,27 +605,32 @@ function VistaBloqueos() {
   })
   const [guardando, setGuardando] = useState(false)
 
-  const cargar = () => setBloqueos(getSlotsBloqueados())
-  useEffect(() => { cargar() }, [])
+  const cargar = useCallback(async () => {
+    setBloqueos(await getSlotsBloqueadosAsync())
+  }, [])
+  useEffect(() => { cargar() }, [cargar])
 
-  const guardar = (e: React.FormEvent) => {
+  const guardar = async (e: React.FormEvent) => {
     e.preventDefault()
     setGuardando(true)
-    crearBloqueo({
-      fecha: form.fecha,
-      horaInicio: form.todoDia ? 'todo-el-dia' : form.horaInicio,
-      horaFin: form.todoDia ? 'todo-el-dia' : form.horaFin,
-      motivo: form.motivo,
-      afecta: form.todoDia ? form.afecta : undefined,
-    })
-    cargar()
-    setForm({ fecha: '', horaInicio: '', horaFin: '', motivo: '', todoDia: false, afecta: 'negocio' })
-    setGuardando(false)
+    try {
+      await crearBloqueoAsync({
+        fecha: form.fecha,
+        horaInicio: form.todoDia ? 'todo-el-dia' : form.horaInicio,
+        horaFin: form.todoDia ? 'todo-el-dia' : form.horaFin,
+        motivo: form.motivo,
+        afecta: form.todoDia ? form.afecta : undefined,
+      })
+      await cargar()
+      setForm({ fecha: '', horaInicio: '', horaFin: '', motivo: '', todoDia: false, afecta: 'negocio' })
+    } finally {
+      setGuardando(false)
+    }
   }
 
-  const eliminar = (id: string) => {
-    eliminarBloqueo(id)
-    cargar()
+  const eliminar = async (id: string) => {
+    await eliminarBloqueoAsync(id)
+    await cargar()
   }
 
   const bloqueosFuturos = bloqueos
@@ -633,7 +639,6 @@ function VistaBloqueos() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Formulario */}
       <div className="bg-white border border-accent p-6">
         <h2 className="font-display text-xl font-light text-text mb-6">Bloquear horario</h2>
         <form onSubmit={guardar} className="flex flex-col gap-4">
@@ -660,7 +665,6 @@ function VistaBloqueos() {
             </label>
           </div>
 
-          {/* Selector de afectación — solo visible si es día completo */}
           {form.todoDia && (
             <div className="border border-accent p-4 flex flex-col gap-3">
               <p className="font-sans text-xs font-light tracking-widest uppercase text-text-muted">¿A quién afecta?</p>
@@ -740,7 +744,6 @@ function VistaBloqueos() {
         </form>
       </div>
 
-      {/* Lista de bloqueos */}
       <div className="flex flex-col gap-3">
         <h2 className="font-display text-xl font-light text-text">Bloqueos activos</h2>
         {bloqueosFuturos.length === 0 ? (
@@ -782,40 +785,146 @@ function VistaBloqueos() {
   )
 }
 
+// ─── Vista Estadísticas ───────────────────────────────────
+function VistaEstadisticas() {
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [cargando, setCargando] = useState(true)
+
+  useEffect(() => {
+    getBookingsAsync().then((b) => { setBookings(b); setCargando(false) })
+  }, [])
+
+  if (cargando) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <p className="font-sans text-sm font-light text-text-muted">Cargando estadísticas...</p>
+      </div>
+    )
+  }
+
+  const hoy = new Date()
+  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0]
+  const finMes    = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().split('T')[0]
+
+  const delMes        = bookings.filter((b) => b.fecha >= inicioMes && b.fecha <= finMes)
+  const delMesActivas = delMes.filter((b) => b.estado !== 'cancelada')
+  const canceladas    = delMes.filter((b) => b.estado === 'cancelada')
+  const ingresosMes   = delMesActivas.reduce((sum, b) => sum + (b.importePagado ?? 0), 0)
+  const clientasUnicas = new Set(
+    bookings.filter((b) => b.estado !== 'cancelada').map((b) => b.clienteEmail)
+  ).size
+
+  const conteoServicios: Record<string, number> = {}
+  bookings
+    .filter((b) => b.estado !== 'cancelada')
+    .forEach((b) => {
+      b.servicios.forEach((id) => {
+        conteoServicios[id] = (conteoServicios[id] ?? 0) + 1
+      })
+    })
+  const topServicios = Object.entries(conteoServicios)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+  const maxConteo = topServicios[0]?.[1] ?? 1
+
+  const KPI = ({ label, value, sub }: { label: string; value: string | number; sub?: string }) => (
+    <div className="bg-white border border-accent p-6 flex flex-col gap-2">
+      <p className="font-sans text-xs font-light tracking-widest uppercase text-text-muted">{label}</p>
+      <p className="font-display text-4xl font-light text-text">{value}</p>
+      {sub && <p className="font-sans text-xs font-light text-text-muted">{sub}</p>}
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col gap-8">
+      <div>
+        <h2 className="font-display text-2xl font-light text-text mb-1">Resumen</h2>
+        <p className="font-sans text-xs font-light text-text-muted tracking-widest uppercase">
+          {MESES[hoy.getMonth()]} {hoy.getFullYear()}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KPI
+          label="Citas este mes"
+          value={delMesActivas.length}
+          sub={`${canceladas.length} cancelada${canceladas.length !== 1 ? 's' : ''}`}
+        />
+        <KPI
+          label="Ingresos (señales)"
+          value={`${ingresosMes}€`}
+          sub="Señales cobradas online"
+        />
+        <KPI
+          label="Clientas totales"
+          value={clientasUnicas}
+          sub="Emails únicos"
+        />
+        <KPI
+          label="Tasa cancelación"
+          value={delMes.length > 0 ? `${Math.round((canceladas.length / delMes.length) * 100)}%` : '—'}
+          sub={`${delMes.length} citas recibidas`}
+        />
+      </div>
+
+      {topServicios.length > 0 && (
+        <div className="bg-white border border-accent p-6 flex flex-col gap-5">
+          <h3 className="font-sans text-xs font-light tracking-widest uppercase text-text-muted">
+            Servicios más solicitados (histórico total)
+          </h3>
+          <div className="flex flex-col gap-3">
+            {topServicios.map(([id, count]) => {
+              const nombre = SERVICIOS.find((s) => s.id === id)?.nombre ?? id
+              const pct = Math.round((count / maxConteo) * 100)
+              return (
+                <div key={id} className="flex items-center gap-3">
+                  <span className="font-sans text-xs font-light text-text w-48 shrink-0 truncate">{nombre}</span>
+                  <div className="flex-1 bg-surface h-2 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="font-sans text-xs font-light text-text-muted w-8 text-right shrink-0">{count}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {bookings.length === 0 && (
+        <div className="bg-white border border-accent p-12 text-center">
+          <p className="font-sans text-sm font-light text-text-muted">
+            Aún no hay reservas registradas. Las estadísticas aparecerán aquí cuando lleguen las primeras citas.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Panel principal ──────────────────────────────────────
-type PanelVista = 'citas' | 'clientes' | 'bloqueos'
+type PanelVista = 'citas' | 'clientes' | 'bloqueos' | 'estadisticas'
 
 export default function PanelPage() {
-  const [autenticado, setAutenticado] = useState(false)
   const [vista, setVista] = useState<PanelVista>('citas')
   const [refreshKey, setRefreshKey] = useState(0)
 
-  useEffect(() => {
-    const saved = sessionStorage.getItem('dbonita_panel_auth')
-    if (saved === 'true') setAutenticado(true)
-  }, [])
-
-  const login = () => {
-    sessionStorage.setItem('dbonita_panel_auth', 'true')
-    setAutenticado(true)
+  const logout = async () => {
+    await fetch('/api/panel/logout', { method: 'POST' })
+    window.location.href = '/panel/login'
   }
-
-  const logout = () => {
-    sessionStorage.removeItem('dbonita_panel_auth')
-    setAutenticado(false)
-  }
-
-  if (!autenticado) return <LoginScreen onLogin={login} />
 
   const NAV: { key: PanelVista; label: string; icon: React.ReactNode }[] = [
-    { key: 'citas',     label: 'Citas',     icon: <Calendar size={16} /> },
-    { key: 'clientes',  label: 'Clientas',  icon: <Users size={16} /> },
-    { key: 'bloqueos',  label: 'Bloqueos',  icon: <Clock size={16} /> },
+    { key: 'citas',        label: 'Citas',         icon: <Calendar size={16} /> },
+    { key: 'clientes',     label: 'Clientas',      icon: <Users size={16} /> },
+    { key: 'bloqueos',     label: 'Bloqueos',      icon: <Clock size={16} /> },
+    { key: 'estadisticas', label: 'Estadísticas',  icon: <BarChart2 size={16} /> },
   ]
 
   return (
     <div className="min-h-screen bg-bg">
-      {/* Navbar panel */}
       <header className="bg-white border-b border-accent sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
@@ -838,22 +947,33 @@ export default function PanelPage() {
               ))}
             </nav>
           </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-1.5 font-sans text-xs font-light text-text-muted hover:text-primary transition-colors"
-            aria-label="Cerrar sesión"
-          >
-            <LogOut size={14} />
-            <span className="hidden sm:inline">Salir</span>
-          </button>
+          <div className="flex items-center gap-4">
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-1.5 font-sans text-xs font-light text-text-muted hover:text-primary transition-colors"
+            >
+              <ExternalLink size={13} />
+              Ver web
+            </a>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 font-sans text-xs font-light text-text-muted hover:text-primary transition-colors"
+              aria-label="Cerrar sesión"
+            >
+              <LogOut size={14} />
+              <span className="hidden sm:inline">Salir</span>
+            </button>
+          </div>
         </div>
-        {/* Nav mobile */}
-        <nav className="sm:hidden flex border-t border-accent">
+        {/* Nav mobile — overflow-x-auto para 4 tabs */}
+        <nav className="sm:hidden flex border-t border-accent overflow-x-auto">
           {NAV.map((n) => (
             <button
               key={n.key}
               onClick={() => setVista(n.key)}
-              className={`flex-1 flex flex-col items-center gap-1 py-2 font-sans text-[10px] font-light tracking-widest uppercase transition-all
+              className={`flex-1 flex flex-col items-center gap-1 py-2 font-sans text-[10px] font-light tracking-widest uppercase transition-all min-w-[64px]
                 ${vista === n.key ? 'text-primary' : 'text-text-muted'}`}
             >
               {n.icon}
@@ -872,9 +992,10 @@ export default function PanelPage() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25 }}
           >
-            {vista === 'citas'    && <VistaCitas onRefresh={() => setRefreshKey((k) => k + 1)} />}
-            {vista === 'clientes' && <VistaClientes key={refreshKey} />}
-            {vista === 'bloqueos' && <VistaBloqueos />}
+            {vista === 'citas'        && <VistaCitas onRefresh={() => setRefreshKey((k) => k + 1)} />}
+            {vista === 'clientes'     && <VistaClientes key={refreshKey} />}
+            {vista === 'bloqueos'     && <VistaBloqueos />}
+            {vista === 'estadisticas' && <VistaEstadisticas />}
           </motion.div>
         </AnimatePresence>
       </main>

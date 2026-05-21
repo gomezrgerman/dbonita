@@ -1,12 +1,37 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
-  if (process.env.SITE_ENABLED === 'true') return NextResponse.next()
+async function verifyPanelCookie(request: NextRequest): Promise<boolean> {
+  const cookieValue = request.cookies.get('dbonita_panel')?.value
+  const secret = process.env.PANEL_PASSWORD
+  if (!secret || !cookieValue) return false
 
+  const encoder = new TextEncoder()
+  const data = encoder.encode('dbonita-panel:' + secret)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const expected = Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+
+  return cookieValue === expected
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  if (pathname.startsWith('/proximamente')) return NextResponse.next()
 
+  // Panel — protección por cookie httpOnly (independiente de SITE_ENABLED)
+  if (pathname.startsWith('/panel')) {
+    if (pathname.startsWith('/panel/login')) return NextResponse.next()
+    const authenticated = await verifyPanelCookie(request)
+    if (!authenticated) {
+      return NextResponse.redirect(new URL('/panel/login', request.url))
+    }
+    return NextResponse.next()
+  }
+
+  // SITE_ENABLED gate para el sitio público
+  if (process.env.SITE_ENABLED === 'true') return NextResponse.next()
+  if (pathname.startsWith('/proximamente')) return NextResponse.next()
   return NextResponse.redirect(new URL('/proximamente', request.url))
 }
 

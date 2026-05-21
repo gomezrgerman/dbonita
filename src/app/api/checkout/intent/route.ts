@@ -10,7 +10,11 @@ export async function POST(req: Request) {
 
   try {
     const stripe = new Stripe(secretKey)
-    const { nombre, email, servicioDesc } = await req.json()
+    const {
+      nombre, email, telefono,
+      servicios, servicioDesc,
+      fecha, hora, duracionMinutos, notas,
+    } = await req.json()
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: 1000, // 10 € en céntimos
@@ -19,7 +23,14 @@ export async function POST(req: Request) {
       receipt_email: email || undefined,
       metadata: {
         nombre: nombre ?? '',
-        servicio: servicioDesc ?? '',
+        email: email ?? '',
+        telefono: telefono ?? '',
+        servicios: JSON.stringify(servicios ?? []),
+        servicio_desc: servicioDesc ?? '',
+        fecha: fecha ?? '',
+        hora: hora ?? '',
+        duracion_minutos: String(duracionMinutos ?? 0),
+        notas: notas ?? '',
       },
     })
 
