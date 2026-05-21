@@ -12,8 +12,8 @@ import {
   SERVICIOS, CATEGORIAS_SERVICIOS, SUGERENCIAS, MENSAJES_CRUZADA,
   type Servicio,
 } from '@/lib/constants'
-import { isDiaCompleto, getSlotsBloqueados, NUM_PERSONAL } from '@/lib/store'
-import { createBookingAsync, getHorasOcupadasByFechaAsync } from '@/lib/supabase-store'
+import { NUM_PERSONAL } from '@/lib/store'
+import { createBookingAsync, getHorasOcupadasByFechaAsync, getSlotsBloqueadosAsync } from '@/lib/supabase-store'
 import { enviarConfirmacion } from '@/lib/email'
 import type { Booking as BookingType } from '@/lib/types'
 
@@ -22,15 +22,14 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   : null
 
 const HORARIO = [
-  { apertura: 10 * 60, cierre: 14 * 60 },
-  { apertura: 16 * 60, cierre: 20 * 60 },
+  { apertura: 10 * 60, cierre: 19 * 60 },
 ]
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const MESES = [
   'Enero','Febrero','Marzo','Abril','Mayo','Junio',
   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre',
 ]
-const DIAS_CERRADO = [0]
+const DIAS_CERRADO = [0, 6]
 
 function toFechaStr(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -155,10 +154,11 @@ interface PagoFormProps {
   fechaStr: string
   horaSeleccionada: string
   duracionTotal: number
+  clientSecret: string
   onExito: (booking: BookingType) => void
 }
 
-function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, onExito }: PagoFormProps) {
+function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, clientSecret, onExito }: PagoFormProps) {
   const stripe = useStripe()
   const elements = useElements()
   const [pagando, setPagando] = useState(false)
@@ -192,7 +192,11 @@ function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, on
       return
     }
 
-    // Pago confirmado — crear reserva en Supabase
+    // Extraemos el paymentIntentId del clientSecret (formato: pi_xxx_secret_xxx)
+    const paymentIntentId = clientSecret.split('_secret_')[0]
+
+    // Pago confirmado — crear reserva en Supabase (vía rápida para el usuario)
+    // El webhook de Stripe actúa como red de seguridad si esto falla
     try {
       const booking = await createBookingAsync({
         clienteNombre: form.nombre,
@@ -206,6 +210,7 @@ function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, on
         importePagado: 10,
         pagado: true,
         estado: 'confirmada',
+        stripePaymentIntentId: paymentIntentId,
       })
       onExito(booking)
     } catch {
@@ -274,6 +279,8 @@ export default function Booking() {
   const [reservaGuardada, setReservaGuardada] = useState<BookingType | null>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [horasOcupadas, setHorasOcupadas] = useState<Array<{ inicio: number; fin: number }>>([])
+  const [diaCompletoSupa, setDiaCompletoSupa] = useState(false)
+  const [diasBloqueadosMes, setDiasBloqueadosMes] = useState<Set<string>>(new Set())
   const [cargandoSlots, setCargandoSlots] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [catAbierta, setCatAbierta] = useState<string | null>(null)
@@ -337,10 +344,28 @@ export default function Booking() {
   const fechaStr = diaSeleccionado ? toFechaStr(año, mes, diaSeleccionado) : ''
 
   useEffect(() => {
-    if (!fechaStr) { setHorasOcupadas([]); return }
+    getSlotsBloqueadosAsync().then((bloqueos) => {
+      const fechaInicio = toFechaStr(año, mes, 1)
+      const ultimoDia = new Date(año, mes + 1, 0).getDate()
+      const fechaFin = toFechaStr(año, mes, ultimoDia)
+      const cerrados = new Set(
+        bloqueos
+          .filter((b) => b.fecha >= fechaInicio && b.fecha <= fechaFin)
+          .filter((b) => b.horaInicio === 'todo-el-dia' && (b.afecta === 'negocio' || !b.afecta))
+          .map((b) => b.fecha)
+      )
+      setDiasBloqueadosMes(cerrados)
+    })
+  }, [mes, año])
+
+  useEffect(() => {
+    if (!fechaStr) { setHorasOcupadas([]); setDiaCompletoSupa(false); return }
     setCargandoSlots(true)
     getHorasOcupadasByFechaAsync(fechaStr)
-      .then(setHorasOcupadas)
+      .then(({ rangos, diaCompleto }) => {
+        setHorasOcupadas(rangos)
+        setDiaCompletoSupa(diaCompleto)
+      })
       .finally(() => setCargandoSlots(false))
   }, [fechaStr])
 
@@ -356,21 +381,15 @@ export default function Booking() {
 
   const slotsDisponibles = useMemo(() => {
     if (duracionTotal === 0 || !fechaStr) return slotsBase
-    if (isDiaCompleto(fechaStr)) return []
+    if (diaCompletoSupa) return []
     if (cargandoSlots) return []
     return slotsBase.filter((slot) => {
       const inicio = timeToMin(slot)
       const fin = inicio + duracionTotal
-      const reservas = horasOcupadas.filter((o) => inicio < o.fin && fin > o.inicio).length
-      const bloqueados = getSlotsBloqueados()
-        .filter((b) => b.fecha === fechaStr)
-        .filter((b) => {
-          if (b.horaInicio === 'todo-el-dia') return true
-          return inicio < timeToMin(b.horaFin) && fin > timeToMin(b.horaInicio)
-        }).length
-      return reservas + bloqueados < NUM_PERSONAL
+      const ocupados = horasOcupadas.filter((o) => inicio < o.fin && fin > o.inicio).length
+      return ocupados < NUM_PERSONAL
     })
-  }, [duracionTotal, fechaStr, slotsBase, horasOcupadas, cargandoSlots])
+  }, [duracionTotal, fechaStr, slotsBase, horasOcupadas, diaCompletoSupa, cargandoSlots])
 
   const diasMes = getDiasDelMes(año, mes)
   const fechaFormateada = diaSeleccionado
@@ -396,8 +415,6 @@ export default function Booking() {
 
   const elegirDia = (dia: number) => {
     if (esPasado(año, mes, dia) || esCerrado(año, mes, dia)) return
-    const fecha = toFechaStr(año, mes, dia)
-    if (isDiaCompleto(fecha)) return
     setDiaSeleccionado(dia)
     setHoraSeleccionada(null)
   }
@@ -408,9 +425,22 @@ export default function Booking() {
     else if (paso === 'pago') { setClientSecret(null); setPaso('datos') }
   }
 
+  const emailValido = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+  const telefonoValido = (v: string) => v.replace(/[\s\-().+]/g, '').length >= 9
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (carrito.length === 0 || !diaSeleccionado || !horaSeleccionada) return
+
+    if (!emailValido(form.email)) {
+      setError('El email no tiene un formato válido.')
+      return
+    }
+    if (!telefonoValido(form.telefono)) {
+      setError('El teléfono debe tener al menos 9 dígitos.')
+      return
+    }
+
     setEnviando(true)
     setError(null)
     try {
@@ -420,7 +450,13 @@ export default function Booking() {
         body: JSON.stringify({
           nombre: form.nombre,
           email: form.email,
+          telefono: form.telefono,
+          servicios: carrito,
           servicioDesc: serviciosEnCarrito.map((s) => s.nombre).join(' + '),
+          fecha: fechaStr,
+          hora: horaSeleccionada,
+          duracionMinutos: duracionTotal,
+          notas: form.notas,
         }),
       })
       const data = await res.json()
@@ -764,7 +800,7 @@ export default function Booking() {
                   <div className="grid grid-cols-7 gap-1">
                     {diasMes.map((dia, i) => {
                       if (!dia) return <div key={`e-${i}`} />
-                      const bloqueado = isDiaCompleto(toFechaStr(año, mes, dia))
+                      const bloqueado = diasBloqueadosMes.has(toFechaStr(año, mes, dia))
                       const noDisp = esPasado(año, mes, dia) || esCerrado(año, mes, dia) || bloqueado
                       const esHoy = dia === hoy.getDate() && mes === hoy.getMonth() && año === hoy.getFullYear()
                       const esSeleccionado = dia === diaSeleccionado
@@ -818,9 +854,8 @@ export default function Booking() {
                       </p>
                       <div className="clay-card p-4" style={{ borderRadius: '16px' }}>
                         <span className="label-upper text-text-muted block mb-2">Horario del estudio</span>
-                        <p className="text-sm text-black mb-0.5" style={{ fontWeight: 400 }}>Lunes a viernes · 10:00–14:00 y 16:00–20:00</p>
-                        <p className="text-sm text-black mb-0.5" style={{ fontWeight: 400 }}>Sábados · 10:00–14:00</p>
-                        <p className="text-xs text-text-muted" style={{ fontWeight: 400 }}>Domingos cerrado</p>
+                        <p className="text-sm text-black mb-0.5" style={{ fontWeight: 400 }}>Lunes a viernes · 10:00–19:00</p>
+                        <p className="text-xs text-text-muted" style={{ fontWeight: 400 }}>Sábados y domingos cerrado</p>
                       </div>
                     </motion.div>
                   ) : (
@@ -1042,7 +1077,7 @@ export default function Booking() {
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = ''
                     e.currentTarget.style.boxShadow = ''
-                    e.currentTarget.style.background = !form.nombre || !form.telefono || !form.email ? 'var(--color-accent)' : '#000'
+                    e.currentTarget.style.background = enviando || !form.nombre || !form.telefono || !form.email ? 'var(--color-accent)' : '#000'
                   }}
                 >
                   {enviando ? 'Preparando pago...' : 'Ir al pago — señal 10 €'}
@@ -1114,6 +1149,7 @@ export default function Booking() {
                   fechaStr={fechaStr}
                   horaSeleccionada={horaSeleccionada!}
                   duracionTotal={duracionTotal}
+                  clientSecret={clientSecret}
                   onExito={handlePagoExito}
                 />
               </Elements>
@@ -1172,11 +1208,14 @@ export default function Booking() {
 
               <div className="clay-card w-full text-left p-4" style={{ borderRadius: '16px' }}>
                 <p className="text-xs text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
-                  Para cancelar tu cita, visita{' '}
-                  <span className="text-black" style={{ fontFamily: '"Space Mono", monospace', fontWeight: 700 }}>
-                    /cancelar/{reservaGuardada.id}
-                  </span>
-                  . Recuerda que la cancelación es gratuita solo hasta 24h antes de la cita.
+                  Cancelación gratuita hasta 24h antes.{' '}
+                  <a
+                    href={`/cancelar/${reservaGuardada.id}`}
+                    className="text-black underline underline-offset-2"
+                    style={{ fontFamily: '"Space Mono", monospace', fontWeight: 700 }}
+                  >
+                    Cancelar mi cita
+                  </a>
                 </p>
               </div>
 

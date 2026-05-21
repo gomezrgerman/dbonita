@@ -83,10 +83,10 @@ export default function Footer() {
               <h4 className="label-upper" style={{ color: 'rgba(255,255,255,0.3)' }}>Contacto</h4>
               <ul className="flex flex-col gap-3">
                 <li>
-                  <a href="tel:+34600000000" className="flex items-center gap-3 text-sm transition-colors duration-200" style={{ color: 'rgba(255,255,255,0.5)' }}
+                  <a href="tel:+34657332722" className="flex items-center gap-3 text-sm transition-colors duration-200" style={{ color: 'rgba(255,255,255,0.5)' }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')} onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}>
                     <Phone size={14} style={{ color: 'var(--color-pomegranate)', flexShrink: 0 }} />
-                    +34 600 000 000
+                    +34 657 33 27 22
                   </a>
                 </li>
                 <li>
@@ -98,13 +98,13 @@ export default function Footer() {
                 </li>
                 <li className="flex items-start gap-3 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
                   <MapPin size={14} style={{ color: 'var(--color-pomegranate)', flexShrink: 0, marginTop: 2 }} />
-                  Calle [Dirección], Dénia, Alicante
+                  Carrer del Cop, 5 · 1º 2ª · Dénia, Alicante
                 </li>
               </ul>
               <div className="mt-1">
                 <h5 className="label-upper mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>Horario</h5>
-                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>Lun — Vie: 10:00 – 20:00</p>
-                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>Sábado: 10:00 – 15:00</p>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>Lun — Vie: 10:00 – 19:00</p>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>Sáb y Dom: cerrado</p>
               </div>
             </div>
           </div>

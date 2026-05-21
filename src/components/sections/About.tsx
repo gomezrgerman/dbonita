@@ -40,9 +40,9 @@ export default function About() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.4 }}
               className="absolute -top-3 -right-3 md:-top-4 md:-right-4 lg:-right-8 bg-lemon rounded-card shadow-hard flex flex-col items-center justify-center w-20 h-20 md:w-24 md:h-24 z-20"
-              aria-label="Valoración 4.9 de 5"
+              aria-label="Valoración 5.0 de 5 en Google"
             >
-              <span className="font-sans text-3xl text-black leading-none" style={{ fontWeight: 800, letterSpacing: '-0.04em' }}>4.9</span>
+              <span className="font-sans text-3xl text-black leading-none" style={{ fontWeight: 800, letterSpacing: '-0.04em' }}>5.0</span>
               <span className="label-upper text-black/60 mt-0.5" style={{ fontSize: '0.6rem' }}>valoración</span>
             </motion.div>
           </motion.div>
@@ -56,7 +56,7 @@ export default function About() {
               transition={{ duration: 0.6 }}
             >
               <span className="label-upper" style={{ color: 'var(--color-text-muted)' }}>
-                Conoce a la artista
+                Conoce al equipo
               </span>
             </motion.div>
 
@@ -73,9 +73,9 @@ export default function About() {
                 lineHeight: 1.1,
               }}
             >
-              Hola, soy{' '}
-              <span style={{ color: 'var(--color-brand)' }}>Diana</span>{' '}
-              — tu manicurista en Dénia
+              Somos{' '}
+              <span style={{ color: 'var(--color-brand)' }}>Diana y Valeria</span>
+              {' '}— tu centro de estética en Dénia
             </motion.h2>
 
             <motion.div

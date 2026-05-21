@@ -8,25 +8,25 @@ const INFO_CONTACTO = [
   {
     icono: Phone,
     etiqueta: 'Teléfono',
-    valor: '+34 600 000 000', // TODO: Reemplazar con teléfono real
-    href: 'tel:+34600000000',
+    valor: '+34 657 33 27 22',
+    href: 'tel:+34657332722',
   },
   {
     icono: Mail,
     etiqueta: 'Email',
-    valor: 'hola@dbonita.es', // TODO: Reemplazar con email real
+    valor: 'hola@dbonita.es',
     href: 'mailto:hola@dbonita.es',
   },
   {
     icono: MapPin,
     etiqueta: 'Ubicación',
-    valor: 'Dénia, Alicante',
-    href: 'https://www.google.com/maps/search/D+Bonita+Denia',
+    valor: 'Carrer del Cop, 5 · 1º 2ª · Dénia, Alicante',
+    href: 'https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante',
   },
   {
     icono: Clock,
     etiqueta: 'Horario',
-    valor: 'Lun–Vie 10–20h · Sáb 10–14h · Dom cerrado',
+    valor: 'Lun–Vie 10:00–19:00 · Sáb y Dom cerrado',
     href: null,
   },
 ]
@@ -165,20 +165,21 @@ export default function Contact() {
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             className="relative"
           >
-            {/* TODO: Sustituir src del iframe por el embed de Google Maps de la dirección exacta */}
             <div className="bg-surface aspect-[4/3] lg:aspect-auto lg:h-full min-h-80 flex flex-col items-center justify-center gap-4 border border-accent">
               <MapPin size={32} className="text-primary" aria-hidden="true" />
-              <div className="text-center">
-                <p className="font-display text-xl font-light text-text">
-                  Dénia, Alicante
+              <div className="text-center px-6">
+                <p className="font-sans text-xl text-text" style={{ fontWeight: 700, letterSpacing: '-0.02em' }}>
+                  D Bonita · Dénia
                 </p>
-                <p className="font-sans text-sm font-light text-text-muted mt-1">
-                  {/* TODO: Añadir dirección exacta cuando esté disponible */}
-                  Dénia, Alicante
+                <p className="font-sans text-sm text-text-muted mt-1" style={{ fontWeight: 400 }}>
+                  Carrer del Cop, 5 · Piso 1 puerta 2
+                </p>
+                <p className="font-sans text-sm text-text-muted" style={{ fontWeight: 400 }}>
+                  03700 Dénia, Alicante
                 </p>
               </div>
               <a
-                href="https://www.google.com/maps/search/D+Bonita+Denia"
+                href="https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-secondary text-xs mt-2"
