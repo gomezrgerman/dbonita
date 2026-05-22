@@ -139,11 +139,11 @@ export default function Footer() {
           {/* Crédito */}
           <div
             className="mt-10 pt-8 flex flex-col items-center gap-3"
-            style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+            style={{ borderTop: '1px solid rgba(249,188,26,0.12)' }}
           >
             <p
               className="text-xs text-center leading-relaxed"
-              style={{ color: 'rgba(255,255,255,0.15)', fontWeight: 300, fontStyle: 'italic', letterSpacing: '0.015em' }}
+              style={{ color: 'rgba(249,188,26,0.38)', fontWeight: 300, fontStyle: 'italic', letterSpacing: '0.015em' }}
             >
               Internet ya tenía suficientes webs feas.
             </p>
@@ -153,17 +153,17 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="text-xs transition-all duration-500"
               style={{
-                color: 'rgba(255,255,255,0.22)',
+                color: 'rgba(249,188,26,0.5)',
                 fontWeight: 400,
                 letterSpacing: '0.12em',
                 fontFamily: '"Space Mono", monospace',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'rgba(255,255,255,0.65)'
+                e.currentTarget.style.color = '#F9BC1A'
                 e.currentTarget.style.letterSpacing = '0.18em'
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'rgba(255,255,255,0.22)'
+                e.currentTarget.style.color = 'rgba(249,188,26,0.5)'
                 e.currentTarget.style.letterSpacing = '0.12em'
               }}
             >
