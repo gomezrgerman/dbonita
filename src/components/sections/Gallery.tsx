@@ -5,10 +5,12 @@ import Image from 'next/image'
 import { Instagram } from 'lucide-react'
 import { GALERIA_ITEMS } from '@/lib/constants'
 import { GalleryClipDefs, getClipPathId } from '@/components/ui/image-mask'
+import { useLang } from '@/lib/i18n'
 
 const INSTAGRAM_URL = 'https://www.instagram.com/dbonitadenia/'
 
 export default function Gallery() {
+  const { t } = useLang()
   return (
     <section id="galeria" className="section-padding bg-bg overflow-hidden" aria-label="Galería de resultados">
       {/* SVG clip-paths definitions */}
@@ -24,7 +26,7 @@ export default function Gallery() {
               viewport={{ once: true }} transition={{ duration: 0.5 }}
               className="label-upper text-text-muted"
             >
-              Nuestro trabajo
+              {t.gallery.eyebrow}
             </motion.span>
             <motion.h2
               initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
@@ -32,8 +34,8 @@ export default function Gallery() {
               className="font-sans leading-tight text-black"
               style={{ fontSize: 'clamp(2rem, 5vw, 3.25rem)', fontWeight: 800, letterSpacing: '-0.03em' }}
             >
-              Resultados que{' '}
-              <span style={{ color: 'var(--color-pomegranate)' }}>hablan</span>
+              {t.gallery.headlinePre}{' '}
+              <span style={{ color: 'var(--color-pomegranate)' }}>{t.gallery.headlineAccent}</span>
             </motion.h2>
           </div>
           <motion.a
@@ -78,7 +80,7 @@ export default function Gallery() {
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               {/* Etiqueta fuera del clip — siempre legible */}
-              <span className="label-upper text-text-muted text-center px-2 pb-1">{item.tratamiento}</span>
+              <span className="label-upper text-text-muted text-center px-2 pb-1">{t.gallery.treatments[item.tratamiento] ?? item.tratamiento}</span>
             </motion.div>
           ))}
         </div>
@@ -95,7 +97,7 @@ export default function Gallery() {
             aria-label="Ver todos los trabajos en Instagram de D Bonita Dénia"
           >
             <Instagram size={16} aria-hidden="true" />
-            Ver más en @dbonitadenia
+            {t.gallery.instagramCta}
           </a>
         </motion.div>
       </div>

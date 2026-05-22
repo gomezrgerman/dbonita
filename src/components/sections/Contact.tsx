@@ -1,41 +1,42 @@
 'use client'
 
 import { motion } from 'framer-motion'
-
 import { MapPin, Phone, Mail, Instagram, MessageCircle, Clock } from 'lucide-react'
-
-const INFO_CONTACTO = [
-  {
-    icono: Phone,
-    etiqueta: 'Teléfono',
-    valor: '+34 657 33 27 22',
-    href: 'tel:+34657332722',
-  },
-  {
-    icono: Mail,
-    etiqueta: 'Email',
-    valor: 'hola@dbonita.es',
-    href: 'mailto:hola@dbonita.es',
-  },
-  {
-    icono: MapPin,
-    etiqueta: 'Ubicación',
-    valor: 'Carrer del Cop, 5 · 1º 2ª · Dénia, Alicante',
-    href: 'https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante',
-  },
-  {
-    icono: Clock,
-    etiqueta: 'Horario',
-    valor: 'Lun–Vie 10:00–19:00 · Sáb y Dom cerrado',
-    href: null,
-  },
-]
+import { useLang } from '@/lib/i18n'
 
 export default function Contact() {
+  const { t } = useLang()
   const instagramUrl =
     process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://instagram.com/dbonita'
   const whatsappNumber =
     process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'
+
+  const infoContacto = [
+    {
+      icono: Phone,
+      etiqueta: t.contact.labels.phone,
+      valor: '+34 657 33 27 22',
+      href: 'tel:+34657332722',
+    },
+    {
+      icono: Mail,
+      etiqueta: t.contact.labels.email,
+      valor: 'hola@dbonita.es',
+      href: 'mailto:hola@dbonita.es',
+    },
+    {
+      icono: MapPin,
+      etiqueta: t.contact.labels.location,
+      valor: 'Carrer del Cop, 5 · 1º 2ª · Dénia, Alicante',
+      href: 'https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante',
+    },
+    {
+      icono: Clock,
+      etiqueta: t.contact.labels.hours,
+      valor: t.contact.hoursValue,
+      href: null,
+    },
+  ]
 
   return (
     <section
@@ -55,7 +56,7 @@ export default function Contact() {
             >
               <span className="decorative-line" aria-hidden="true" />
               <span className="font-sans text-xs font-light tracking-[0.3em] uppercase text-text-muted">
-                Contáctanos
+                {t.contact.eyebrow}
               </span>
             </motion.div>
 
@@ -66,8 +67,8 @@ export default function Contact() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="font-display text-3xl sm:text-4xl lg:text-6xl font-light text-text leading-tight"
             >
-              Estamos aquí{' '}
-              <em className="not-italic text-primary">para ti</em>
+              {t.contact.headlinePre}{' '}
+              <em className="not-italic text-primary">{t.contact.headlineAccent}</em>
             </motion.h2>
 
             <motion.p
@@ -77,9 +78,7 @@ export default function Contact() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="font-sans text-base font-light text-text-muted leading-relaxed max-w-md"
             >
-              ¿Tienes alguna pregunta o quieres saber más sobre nuestros
-              tratamientos? No dudes en ponerte en contacto con nosotros. Estaremos
-              encantadas de atenderte.
+              {t.contact.body}
             </motion.p>
 
             {/* Info de contacto */}
@@ -90,7 +89,7 @@ export default function Contact() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="flex flex-col gap-5"
             >
-              {INFO_CONTACTO.map((item) => {
+              {infoContacto.map((item) => {
                 const Icono = item.icono
                 const content = (
                   <div className="flex items-start gap-4">
@@ -139,17 +138,17 @@ export default function Contact() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 border border-accent px-4 py-2.5 font-sans text-xs font-light tracking-widest uppercase text-text-muted hover:border-primary hover:text-primary transition-all duration-300"
-                aria-label="Síguenos en Instagram"
+                aria-label="Instagram"
               >
                 <Instagram size={14} aria-hidden="true" />
                 Instagram
               </a>
               <a
-                href={`https://wa.me/${whatsappNumber}?text=Hola, me gustaría obtener más información`}
+                href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(t.contact.waMsg)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 border border-accent px-4 py-2.5 font-sans text-xs font-light tracking-widest uppercase text-text-muted hover:border-primary hover:text-primary transition-all duration-300"
-                aria-label="Contactar por WhatsApp"
+                aria-label="WhatsApp"
               >
                 <MessageCircle size={14} aria-hidden="true" />
                 WhatsApp
@@ -177,16 +176,15 @@ export default function Contact() {
                 title="Ubicación de D Bonita en Google Maps"
                 aria-label="Mapa de ubicación de D Bonita, Carrer del Cop 5, Dénia"
               />
-              {/* Botón superpuesto */}
               <a
                 href="https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="absolute bottom-4 right-4 btn-secondary text-xs shadow-clay"
-                aria-label="Abrir en Google Maps"
+                aria-label={t.contact.openMaps}
               >
                 <MapPin size={12} aria-hidden="true" />
-                Abrir en Maps
+                {t.contact.openMaps}
               </a>
             </div>
           </motion.div>

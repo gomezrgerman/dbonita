@@ -3,8 +3,10 @@
 import { Instagram, MessageCircle, MapPin, Phone, Mail } from 'lucide-react'
 import Image from 'next/image'
 import { SITE_NAME, NAV_LINKS } from '@/lib/constants'
+import { useLang } from '@/lib/i18n'
 
 export default function Footer() {
+  const { t } = useLang()
   const instagramUrl  = process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://instagram.com/dbonita'
   const whatsappNum   = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'
 
@@ -14,7 +16,6 @@ export default function Footer() {
 
   return (
     <footer id="contacto" role="contentinfo" className="bg-bg px-6 lg:px-12 pb-8">
-      {/* Contenedor principal con radio grande — Clay section */}
       <div
         className="max-w-7xl mx-auto rounded-section overflow-hidden"
         style={{ backgroundColor: '#000', borderRadius: '40px' }}
@@ -33,16 +34,15 @@ export default function Footer() {
                 className="object-contain"
               />
               <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>
-                Tu centro de estética de confianza en Dénia. Lifting de pestañas,
-                higienes faciales y servicios corporales con resultados reales y personalizados.
+                {t.footer.tagline}
               </p>
               <div className="flex items-center gap-3 mt-1">
                 {[
-                  { href: instagramUrl, icon: <Instagram size={16} />, label: 'Síguenos en Instagram' },
-                  { href: `https://wa.me/${whatsappNum}?text=Hola, me gustaría reservar una cita`, icon: <MessageCircle size={16} />, label: 'Contactar por WhatsApp' },
+                  { href: instagramUrl, icon: <Instagram size={16} />, label: 'Instagram' },
+                  { href: `https://wa.me/${whatsappNum}?text=${encodeURIComponent(t.footer.bookWaMsg)}`, icon: <MessageCircle size={16} />, label: 'WhatsApp' },
                 ].map(({ href, icon, label }) => (
                   <a
-                    key={href}
+                    key={label}
                     href={href} target="_blank" rel="noopener noreferrer"
                     aria-label={label}
                     className="w-10 h-10 rounded-card border flex items-center justify-center text-white/60 transition-all duration-200"
@@ -58,10 +58,10 @@ export default function Footer() {
 
             {/* Navegación */}
             <div className="flex flex-col gap-4">
-              <h4 className="label-upper" style={{ color: 'rgba(255,255,255,0.3)' }}>Navegación</h4>
+              <h4 className="label-upper" style={{ color: 'rgba(255,255,255,0.3)' }}>{t.footer.navigation}</h4>
               <nav aria-label="Navegación footer">
                 <ul className="flex flex-col gap-3">
-                  {NAV_LINKS.map((link) => (
+                  {NAV_LINKS.map((link, i) => (
                     <li key={link.href}>
                       <button
                         onClick={() => goTo(link.href)}
@@ -70,7 +70,7 @@ export default function Footer() {
                         onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
                         onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
                       >
-                        {link.label}
+                        {t.nav.links[i]}
                       </button>
                     </li>
                   ))}
@@ -80,7 +80,7 @@ export default function Footer() {
 
             {/* Contacto */}
             <div className="flex flex-col gap-4">
-              <h4 className="label-upper" style={{ color: 'rgba(255,255,255,0.3)' }}>Contacto</h4>
+              <h4 className="label-upper" style={{ color: 'rgba(255,255,255,0.3)' }}>{t.footer.contact}</h4>
               <ul className="flex flex-col gap-3">
                 <li>
                   <a href="tel:+34657332722" className="flex items-center gap-3 text-sm transition-colors duration-200" style={{ color: 'rgba(255,255,255,0.5)' }}
@@ -102,9 +102,9 @@ export default function Footer() {
                 </li>
               </ul>
               <div className="mt-1">
-                <h5 className="label-upper mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>Horario</h5>
-                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>Lun — Vie: 10:00 – 19:00</p>
-                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>Sáb y Dom: cerrado</p>
+                <h5 className="label-upper mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>{t.footer.hours}</h5>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{t.footer.hoursWeekday}</p>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{t.footer.hoursWeekend}</p>
               </div>
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function Footer() {
           {/* Copyright + legal */}
           <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)', fontWeight: 400 }}>
-              © 2026 {SITE_NAME} — Todos los derechos reservados
+              © 2026 {SITE_NAME} — {t.footer.copyright}
             </p>
             <div className="flex items-center gap-4">
               <a
@@ -122,7 +122,7 @@ export default function Footer() {
                 onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
               >
-                Privacidad
+                {t.footer.privacy}
               </a>
               <a
                 href="/aviso-legal"
@@ -131,7 +131,7 @@ export default function Footer() {
                 onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
               >
-                Aviso Legal
+                {t.footer.legal}
               </a>
             </div>
           </div>

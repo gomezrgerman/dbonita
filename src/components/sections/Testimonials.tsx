@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import { TESTIMONIOS } from '@/lib/constants'
+import { useLang } from '@/lib/i18n'
 
 function Estrellas({ cantidad }: { cantidad: number }) {
   return (
@@ -16,6 +17,7 @@ function Estrellas({ cantidad }: { cantidad: number }) {
 }
 
 export default function Testimonials() {
+  const { t } = useLang()
   const [actual, setActual] = useState(0)
   const total = TESTIMONIOS.length
 
@@ -37,7 +39,7 @@ export default function Testimonials() {
             viewport={{ once: true }} transition={{ duration: 0.5 }}
             className="label-upper text-black/50"
           >
-            Lo que dicen nuestras clientas
+            {t.testimonials.eyebrow}
           </motion.span>
           <motion.h2
             initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
@@ -45,8 +47,9 @@ export default function Testimonials() {
             className="font-sans font-800 leading-tight text-black"
             style={{ fontSize: 'clamp(2rem, 5vw, 3.25rem)', fontWeight: 800, letterSpacing: '-0.03em' }}
           >
-            Ellas ya{' '}
-            <span style={{ color: 'var(--color-matcha)' }}>confían</span> en nosotros
+            {t.testimonials.headlinePre}{' '}
+            <span style={{ color: 'var(--color-matcha)' }}>{t.testimonials.headlineAccent}</span>{' '}
+            {t.testimonials.headlineSuf}
           </motion.h2>
         </div>
 

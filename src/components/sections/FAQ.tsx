@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Minus } from 'lucide-react'
-import { PREGUNTAS_FAQ } from '@/lib/constants'
+import { useLang } from '@/lib/i18n'
 
 export default function FAQ() {
+  const { t } = useLang()
   const [abierta, setAbierta] = useState<string | null>(null)
   const toggle = (id: string) => setAbierta((p) => (p === id ? null : id))
 
@@ -20,7 +21,7 @@ export default function FAQ() {
             viewport={{ once: true }} transition={{ duration: 0.5 }}
             className="label-upper text-text-muted"
           >
-            Preguntas Frecuentes
+            {t.faq.eyebrow}
           </motion.span>
           <motion.h2
             initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
@@ -28,8 +29,8 @@ export default function FAQ() {
             className="font-sans font-800 leading-tight text-black"
             style={{ fontSize: 'clamp(2rem, 5vw, 3.25rem)', fontWeight: 800, letterSpacing: '-0.03em' }}
           >
-            Resolvemos tus{' '}
-            <span style={{ color: 'var(--color-ube)' }}>dudas</span>
+            {t.faq.headlinePre}{' '}
+            <span style={{ color: 'var(--color-ube)' }}>{t.faq.headlineAccent}</span>
           </motion.h2>
         </div>
 
@@ -39,7 +40,7 @@ export default function FAQ() {
           viewport={{ once: true }} transition={{ duration: 0.5 }}
           className="flex flex-col gap-3"
         >
-          {PREGUNTAS_FAQ.map((faq, i) => (
+          {t.faq.questions.map((faq, i) => (
             <motion.div
               key={faq.id}
               initial={{ opacity: 0, y: 12 }}
@@ -99,15 +100,15 @@ export default function FAQ() {
           style={{ borderRadius: '16px' }}
         >
           <p className="text-sm text-text-muted" style={{ fontWeight: 400 }}>
-            ¿Tienes otra pregunta? Escríbenos sin compromiso.
+            {t.faq.ctaText}
           </p>
           <a
-            href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'}?text=Hola, tengo una pregunta sobre vuestros servicios`}
+            href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'}?text=${encodeURIComponent(t.faq.ctaWaMsg)}`}
             target="_blank" rel="noopener noreferrer"
             className="btn-primary whitespace-nowrap"
-            aria-label="Contactar por WhatsApp para resolver dudas"
+            aria-label={t.faq.ctaBtn}
           >
-            Preguntar por WhatsApp
+            {t.faq.ctaBtn}
           </a>
         </motion.div>
       </div>

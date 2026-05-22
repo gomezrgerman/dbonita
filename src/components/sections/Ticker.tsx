@@ -1,7 +1,10 @@
-import { TICKER_ITEMS } from '@/lib/constants'
+'use client'
+
+import { useLang } from '@/lib/i18n'
 
 export default function Ticker() {
-  const items = [...TICKER_ITEMS, ...TICKER_ITEMS, ...TICKER_ITEMS, ...TICKER_ITEMS]
+  const { t } = useLang()
+  const items = [...t.ticker, ...t.ticker, ...t.ticker, ...t.ticker]
 
   return (
     <section

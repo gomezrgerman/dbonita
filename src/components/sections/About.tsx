@@ -3,8 +3,10 @@
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { STATS } from '@/lib/constants'
+import { useLang } from '@/lib/i18n'
 
 export default function About() {
+  const { t } = useLang()
   return (
     <section
       id="sobre-mi"
@@ -43,7 +45,7 @@ export default function About() {
               aria-label="Valoración 5.0 de 5 en Google"
             >
               <span className="font-sans text-3xl text-black leading-none" style={{ fontWeight: 800, letterSpacing: '-0.04em' }}>5.0</span>
-              <span className="label-upper text-black/60 mt-0.5" style={{ fontSize: '0.6rem' }}>valoración</span>
+              <span className="label-upper text-black/60 mt-0.5" style={{ fontSize: '0.6rem' }}>{t.about.rating}</span>
             </motion.div>
           </motion.div>
 
@@ -56,7 +58,7 @@ export default function About() {
               transition={{ duration: 0.6 }}
             >
               <span className="label-upper" style={{ color: 'var(--color-text-muted)' }}>
-                Conoce al equipo
+                {t.about.eyebrow}
               </span>
             </motion.div>
 
@@ -73,9 +75,9 @@ export default function About() {
                 lineHeight: 1.1,
               }}
             >
-              Somos{' '}
-              <span style={{ color: 'var(--color-brand)' }}>Diana y Valeria</span>
-              {' '}— tu centro de estética en Dénia
+              {t.about.headlinePre}{' '}
+              <span style={{ color: 'var(--color-brand)' }}>{t.about.headlineAccent}</span>
+              {' '}{t.about.headlineSuf}
             </motion.h2>
 
             <motion.div
@@ -85,11 +87,7 @@ export default function About() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="flex flex-col gap-4"
             >
-              {[
-                'En D Bonita cuidamos cada detalle para ofrecerte mucho más que un tratamiento: una experiencia de bienestar, belleza y desconexión.',
-                'Somos un centro de estética en Dénia especializado en realzar tu belleza natural. Lifting de pestañas, higienes faciales y servicios corporales adaptados a cada clienta.',
-                'Nuestro espacio está diseñado para que te relajes y disfrutes de tu momento. Apostamos por la calidad, la cercanía y resultados visibles desde la primera sesión.',
-              ].map((p, i) => (
+              {t.about.body.map((p, i) => (
                 <p key={i} className="text-base leading-relaxed" style={{ color: 'var(--color-text-dark)', fontWeight: 400 }}>
                   {p}
                 </p>
@@ -105,7 +103,7 @@ export default function About() {
               className="grid grid-cols-2 gap-4 pt-6 border-t"
               style={{ borderColor: 'var(--color-accent)' }}
             >
-              {STATS.map((stat) => (
+              {STATS.map((stat, i) => (
                 <div
                   key={stat.etiqueta}
                   className="clay-card p-3 md:p-4"
@@ -115,7 +113,7 @@ export default function About() {
                     {stat.valor}
                   </span>
                   <span className="label-upper mt-0.5 md:mt-1 block" style={{ color: 'var(--color-text-muted)', fontSize: '0.6rem' }}>
-                    {stat.etiqueta}
+                    {t.about.stats[i]}
                   </span>
                 </div>
               ))}

@@ -19,6 +19,7 @@ const spaceMono = Space_Mono({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://dbonita.es'),
   title: 'D Bonita — Centro de Estética en Dénia',
   description:
     'En D Bonita cuidamos cada detalle para ofrecerte mucho más que un tratamiento: una experiencia de bienestar, belleza y desconexión. Centro de estética en Dénia especializado en lifting de pestañas, higienes faciales y servicios corporales.',
@@ -40,14 +41,6 @@ export const metadata: Metadata = {
       'Centro de estética en Dénia especializado en lifting de pestañas, higienes faciales y servicios corporales.',
     type: 'website',
     locale: 'es_ES',
-    images: [
-      {
-        url: '/img/og-image.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'D Bonita — Centro de Estética en Dénia',
-      },
-    ],
   },
   twitter: {
     card: 'summary_large_image',

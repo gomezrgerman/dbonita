@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Script from 'next/script'
+import { useLang } from '@/lib/i18n'
 
 declare global {
   interface Window {
@@ -26,14 +27,10 @@ const MAX_PX = 20  // máximo desplazamiento en píxeles
 
 export default function Hero() {
   const bgRef = useRef<HTMLDivElement>(null)
+  const { t } = useLang()
 
   const reservar = () => {
-    const url = process.env.NEXT_PUBLIC_CALENDLY_URL
-    const wa  = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER
-    window.open(
-      url ?? `https://wa.me/${wa}?text=Hola, me gustaría reservar una cita en D Bonita`,
-      '_blank'
-    )
+    document.getElementById('servicios')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const verServicios = () => {
@@ -151,7 +148,7 @@ export default function Hero() {
               className="label-upper text-white/60"
               style={{ fontFamily: '"Space Mono", monospace' }}
             >
-              Estudio de Belleza · Dénia
+              {t.hero.eyebrow}
             </span>
           </motion.div>
 
@@ -166,8 +163,8 @@ export default function Hero() {
               lineHeight: 1.0,
             }}
           >
-            Despierta tu{' '}
-            <span style={{ color: 'var(--color-brand)' }}>belleza</span>.
+            {t.hero.headline}{' '}
+            <span style={{ color: 'var(--color-brand)' }}>{t.hero.headlineAccent}</span>.
           </motion.h1>
 
           <motion.p
@@ -176,21 +173,20 @@ export default function Hero() {
             className="text-base sm:text-lg leading-relaxed max-w-md"
             style={{ fontWeight: 400, color: 'rgba(255,255,255,0.75)' }}
           >
-            Centro de estética en Dénia especializado en lifting de pestañas,
-            higienes faciales y servicios corporales. Resultados reales desde la primera sesión.
+            {t.hero.subheadline}
           </motion.p>
 
           <motion.div custom={0.46} initial="hidden" animate="visible" variants={fadeUp} className="flex flex-wrap gap-3">
-            <button onClick={reservar} className="btn-primary flex-1 sm:flex-initial" aria-label="Reservar cita">
-              Reservar cita
+            <button onClick={reservar} className="btn-primary flex-1 sm:flex-initial" aria-label={t.hero.bookBtn}>
+              {t.hero.bookBtn}
             </button>
             <button
               onClick={verServicios}
               className="btn-secondary"
               style={{ background: 'rgba(255,255,255,0.10)', borderColor: 'rgba(255,255,255,0.25)', color: '#fff' }}
-              aria-label="Ver servicios"
+              aria-label={t.hero.servicesBtn}
             >
-              Ver servicios
+              {t.hero.servicesBtn}
             </button>
           </motion.div>
 

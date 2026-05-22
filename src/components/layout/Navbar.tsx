@@ -5,56 +5,97 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Home, Sparkles, Image, User, Calendar } from 'lucide-react'
 import { NAV_LINKS } from '@/lib/constants'
 import { MenuBar, type GlowMenuItem } from '@/components/ui/glow-menu'
+import { useLang } from '@/lib/i18n'
 
 const iconMap: Record<string, typeof Home> = {
-  'Inicio': Home,
-  'Servicios': Sparkles,
-  'Galería': Image,
-  'Sobre mí': User,
-  'Reservar': Calendar,
+  '#inicio': Home,
+  '#servicios': Sparkles,
+  '#galeria': Image,
+  '#sobre-mi': User,
+  '#reservar': Calendar,
 }
 
 const gradientMap: Record<string, string> = {
-  'Inicio': 'radial-gradient(circle, rgba(108,196,230,0.20) 0%, rgba(108,196,230,0.08) 50%, rgba(108,196,230,0) 100%)',
-  'Servicios': 'radial-gradient(circle, rgba(249,188,26,0.20) 0%, rgba(249,188,26,0.08) 50%, rgba(249,188,26,0) 100%)',
-  'Galería': 'radial-gradient(circle, rgba(108,196,230,0.20) 0%, rgba(108,196,230,0.08) 50%, rgba(108,196,230,0) 100%)',
-  'Sobre mí': 'radial-gradient(circle, rgba(249,188,26,0.20) 0%, rgba(249,188,26,0.08) 50%, rgba(249,188,26,0) 100%)',
-  'Reservar': 'radial-gradient(circle, rgba(108,196,230,0.25) 0%, rgba(108,196,230,0.10) 50%, rgba(108,196,230,0) 100%)',
+  '#inicio':    'radial-gradient(circle, rgba(108,196,230,0.20) 0%, rgba(108,196,230,0.08) 50%, rgba(108,196,230,0) 100%)',
+  '#servicios': 'radial-gradient(circle, rgba(249,188,26,0.20) 0%, rgba(249,188,26,0.08) 50%, rgba(249,188,26,0) 100%)',
+  '#galeria':   'radial-gradient(circle, rgba(108,196,230,0.20) 0%, rgba(108,196,230,0.08) 50%, rgba(108,196,230,0) 100%)',
+  '#sobre-mi':  'radial-gradient(circle, rgba(249,188,26,0.20) 0%, rgba(249,188,26,0.08) 50%, rgba(249,188,26,0) 100%)',
+  '#reservar':  'radial-gradient(circle, rgba(108,196,230,0.25) 0%, rgba(108,196,230,0.10) 50%, rgba(108,196,230,0) 100%)',
 }
 
 const iconColorMap: Record<string, string> = {
-  'Inicio': 'text-brand-blue',
-  'Servicios': 'text-brand',
-  'Galería': 'text-brand-blue',
-  'Sobre mí': 'text-brand',
-  'Reservar': 'text-brand-blue',
+  '#inicio':    'text-brand-blue',
+  '#servicios': 'text-brand',
+  '#galeria':   'text-brand-blue',
+  '#sobre-mi':  'text-brand',
+  '#reservar':  'text-brand-blue',
 }
 
-const menuItems: GlowMenuItem[] = NAV_LINKS.map((link) => ({
-  icon: iconMap[link.label],
-  label: link.label,
-  href: link.href,
-  gradient: gradientMap[link.label],
-  iconColor: iconColorMap[link.label],
-}))
+function LangToggle({ scrolled }: { scrolled: boolean }) {
+  const { lang, setLang } = useLang()
+  return (
+    <div
+      className="flex items-center gap-0.5"
+      style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em' }}
+    >
+      {(['es', 'en'] as const).map((l, i) => (
+        <>
+          {i > 0 && (
+            <span
+              key={`sep-${l}`}
+              style={{ color: scrolled ? 'var(--color-accent)' : 'rgba(255,255,255,0.25)', padding: '0 2px' }}
+            >
+              ·
+            </span>
+          )}
+          <button
+            key={l}
+            onClick={() => setLang(l)}
+            className="px-1.5 py-0.5 rounded transition-all duration-200"
+            style={{
+              color: lang === l
+                ? (scrolled ? 'var(--color-text)' : '#fff')
+                : (scrolled ? 'var(--color-text-muted)' : 'rgba(255,255,255,0.4)'),
+              fontWeight: lang === l ? 700 : 500,
+            }}
+            aria-label={l === 'es' ? 'Cambiar a Español' : 'Switch to English'}
+            aria-pressed={lang === l}
+          >
+            {l.toUpperCase()}
+          </button>
+        </>
+      ))}
+    </div>
+  )
+}
 
 export default function Navbar() {
+  const { t, lang, setLang } = useLang()
   const [menuAbierto, setMenuAbierto] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [activeItem, setActiveItem] = useState<string>('')
+  const [activeLinkIndex, setActiveLinkIndex] = useState(-1)
+
+  const activeItem = activeLinkIndex >= 0 ? (t.nav.links[activeLinkIndex] ?? '') : ''
+
+  const menuItems: GlowMenuItem[] = NAV_LINKS.map((link, i) => ({
+    icon: iconMap[link.href],
+    label: t.nav.links[i],
+    href: link.href,
+    gradient: gradientMap[link.href],
+    iconColor: iconColorMap[link.href],
+  }))
 
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 40)
-
       const sections = NAV_LINKS.map((l) => l.href.replace('#', ''))
       for (const id of sections) {
         const el = document.getElementById(id)
         if (el) {
           const rect = el.getBoundingClientRect()
           if (rect.top <= 120 && rect.bottom >= 120) {
-            const match = NAV_LINKS.find((l) => l.href === `#${id}`)
-            if (match) setActiveItem(match.label)
+            const idx = NAV_LINKS.findIndex((l) => l.href === `#${id}`)
+            if (idx >= 0) setActiveLinkIndex(idx)
             break
           }
         }
@@ -71,16 +112,12 @@ export default function Navbar() {
 
   const handleMenuClick = (_label: string, href: string) => {
     goTo(href)
-    setActiveItem(_label)
+    const idx = NAV_LINKS.findIndex((l) => l.href === href)
+    if (idx >= 0) setActiveLinkIndex(idx)
   }
 
-  const reservar = () => {
-    const url = process.env.NEXT_PUBLIC_CALENDLY_URL
-    const wa = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER
-    window.open(
-      url ?? `https://wa.me/${wa}?text=Hola, me gustaría reservar una cita en D Bonita`,
-      '_blank'
-    )
+  const goToBooking = () => {
+    document.getElementById('servicios')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (
@@ -119,10 +156,11 @@ export default function Navbar() {
           />
         </div>
 
-        {/* CTA desktop */}
-        <div className="hidden lg:block">
-          <button onClick={reservar} className="btn-primary" aria-label="Reservar cita">
-            Reservar cita
+        {/* Lang toggle + CTA desktop */}
+        <div className="hidden lg:flex items-center gap-4">
+          <LangToggle scrolled={scrolled} />
+          <button onClick={goToBooking} className="btn-primary" aria-label={t.nav.bookCta}>
+            {t.nav.bookCta}
           </button>
         </div>
 
@@ -157,17 +195,46 @@ export default function Navbar() {
                   onClick={() => goTo(link.href)}
                   className="text-sm font-medium text-left text-text-muted hover:text-black transition-colors py-2 border-b border-accent last:border-0"
                 >
-                  {link.label}
+                  {t.nav.links[i]}
                 </motion.button>
               ))}
-              <motion.button
+
+              {/* Lang toggle mobile */}
+              <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: NAV_LINKS.length * 0.06 }}
-                onClick={reservar}
+                className="flex items-center gap-2 pt-2"
+              >
+                {(['es', 'en'] as const).map((l) => (
+                  <button
+                    key={l}
+                    onClick={() => setLang(l)}
+                    className="text-xs px-3 py-1.5 rounded-card border transition-all duration-200"
+                    style={{
+                      fontFamily: '"Space Mono", monospace',
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                      borderColor: lang === l ? 'var(--color-text)' : 'var(--color-accent)',
+                      color: lang === l ? 'var(--color-text)' : 'var(--color-text-muted)',
+                      background: lang === l ? 'transparent' : 'transparent',
+                    }}
+                    aria-pressed={lang === l}
+                    aria-label={l === 'es' ? 'Cambiar a Español' : 'Switch to English'}
+                  >
+                    {l.toUpperCase()}
+                  </button>
+                ))}
+              </motion.div>
+
+              <motion.button
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: (NAV_LINKS.length + 1) * 0.06 }}
+                onClick={goToBooking}
                 className="btn-primary mt-2"
               >
-                Reservar cita
+                {t.nav.bookCta}
               </motion.button>
             </div>
           </motion.div>

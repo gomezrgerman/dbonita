@@ -12,6 +12,7 @@ import {
   SERVICIOS, CATEGORIAS_SERVICIOS, SUGERENCIAS, MENSAJES_CRUZADA,
   type Servicio,
 } from '@/lib/constants'
+import { useLang } from '@/lib/i18n'
 import { NUM_PERSONAL } from '@/lib/store'
 import { createBookingAsync, getHorasOcupadasByFechaAsync, getSlotsBloqueadosAsync } from '@/lib/supabase-store'
 import { enviarConfirmacion, enviarNotificacionNegocio } from '@/lib/email'
@@ -266,6 +267,7 @@ function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, cl
 }
 
 export default function Booking() {
+  const { t } = useLang()
   const hoy = new Date()
   const sectionRef = useRef<HTMLElement>(null)
   const [paso, setPaso] = useState<Paso>('servicios')
@@ -498,7 +500,7 @@ export default function Booking() {
             viewport={{ once: true }} transition={{ duration: 0.5 }}
             className="label-upper text-text-muted"
           >
-            Reserva tu cita
+            {t.booking.eyebrow}
           </motion.span>
           <motion.h2
             initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
@@ -506,8 +508,8 @@ export default function Booking() {
             className="font-sans leading-tight text-black"
             style={{ fontSize: 'clamp(2rem, 5vw, 3.25rem)', fontWeight: 800, letterSpacing: '-0.03em' }}
           >
-            Elige tus servicios y{' '}
-            <span style={{ color: 'var(--color-pomegranate)' }}>reserva</span>
+            {t.booking.headlinePre}{' '}
+            <span style={{ color: 'var(--color-pomegranate)' }}>{t.booking.headlineAccent}</span>
           </motion.h2>
         </div>
 
