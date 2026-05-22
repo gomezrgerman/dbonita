@@ -4,6 +4,8 @@
 
 export const SITE_NAME = 'D Bonita'
 
+export const NUM_PERSONAL = 2
+
 export const NAV_LINKS = [
   { label: 'Inicio', href: '#inicio' },
   { label: 'Servicios', href: '#servicios' },

@@ -2,24 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-
-const COOKIE_KEY = 'dbonita_cookies_consent'
+import { useCookieConsent } from '@/lib/cookie-consent'
 
 export default function CookieBanner() {
+  const { accept: acceptConsent, reject: rejectConsent } = useCookieConsent()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    const consent = localStorage.getItem(COOKIE_KEY)
-    if (!consent) setVisible(true)
+    const saved = localStorage.getItem('dbonita_cookies_consent')
+    if (!saved) setVisible(true)
   }, [])
 
-  const aceptar = () => {
-    localStorage.setItem(COOKIE_KEY, 'accepted')
+  const handleAccept = () => {
+    acceptConsent()
     setVisible(false)
   }
 
-  const rechazar = () => {
-    localStorage.setItem(COOKIE_KEY, 'rejected')
+  const handleReject = () => {
+    rejectConsent()
     setVisible(false)
   }
 
@@ -46,26 +46,24 @@ export default function CookieBanner() {
           >
             <p className="text-xs text-text-muted leading-relaxed flex-1" style={{ fontWeight: 400 }}>
               Usamos cookies técnicas necesarias para el proceso de reserva y pago.
-              También se cargan recursos de Google Fonts y Stripe que pueden establecer cookies propias.{' '}
+              Si aceptas, también cargamos el mapa de Google Maps y la animación del hero,
+              que pueden establecer cookies propias.{' '}
               <a href="/privacidad" className="text-black underline underline-offset-2" style={{ fontWeight: 600 }}>
                 Más información
               </a>
             </p>
             <div className="flex items-center gap-2 shrink-0">
               <button
-                onClick={rechazar}
+                onClick={handleReject}
                 className="px-4 py-2 text-xs text-text-muted border border-accent rounded-xl transition-colors hover:border-black hover:text-black"
                 style={{ fontWeight: 500 }}
               >
                 Rechazar
               </button>
               <button
-                onClick={aceptar}
+                onClick={handleAccept}
                 className="px-4 py-2 text-xs text-white rounded-xl transition-all duration-200"
-                style={{
-                  background: '#000',
-                  fontWeight: 700,
-                }}
+                style={{ background: '#000', fontWeight: 700 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'rotateZ(-2deg) translateY(-2px)'
                   e.currentTarget.style.boxShadow = 'rgb(0,0,0) -3px 3px'

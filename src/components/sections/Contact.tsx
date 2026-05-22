@@ -3,9 +3,11 @@
 import { motion } from 'framer-motion'
 import { MapPin, Phone, Mail, Instagram, MessageCircle, Clock } from 'lucide-react'
 import { useLang } from '@/lib/i18n'
+import { useCookieConsent } from '@/lib/cookie-consent'
 
 export default function Contact() {
   const { t } = useLang()
+  const { consent, accept } = useCookieConsent()
   const instagramUrl =
     process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://instagram.com/dbonita'
   const whatsappNumber =
@@ -165,27 +167,59 @@ export default function Contact() {
             className="relative"
           >
             <div className="relative overflow-hidden border border-accent" style={{ borderRadius: '24px', minHeight: '380px' }}>
-              <iframe
-                src="https://maps.google.com/maps?q=Carrer+del+Cop+5+Denia+Alicante+España&t=&z=16&ie=UTF8&iwloc=&output=embed"
-                width="100%"
-                height="100%"
-                style={{ border: 0, position: 'absolute', inset: 0, minHeight: '380px' }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Ubicación de D Bonita en Google Maps"
-                aria-label="Mapa de ubicación de D Bonita, Carrer del Cop 5, Dénia"
-              />
-              <a
-                href="https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="absolute bottom-4 right-4 btn-secondary text-xs shadow-clay"
-                aria-label={t.contact.openMaps}
-              >
-                <MapPin size={12} aria-hidden="true" />
-                {t.contact.openMaps}
-              </a>
+              {consent === 'accepted' ? (
+                <>
+                  <iframe
+                    src="https://maps.google.com/maps?q=Carrer+del+Cop+5+Denia+Alicante+España&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0, position: 'absolute', inset: 0, minHeight: '380px' }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Ubicación de D Bonita en Google Maps"
+                    aria-label="Mapa de ubicación de D Bonita, Carrer del Cop 5, Dénia"
+                  />
+                  <a
+                    href="https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-4 right-4 btn-secondary text-xs shadow-clay"
+                    aria-label={t.contact.openMaps}
+                  >
+                    <MapPin size={12} aria-hidden="true" />
+                    {t.contact.openMaps}
+                  </a>
+                </>
+              ) : (
+                <div
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center"
+                  style={{ background: 'var(--color-surface)' }}
+                >
+                  <MapPin size={28} className="text-primary" aria-hidden="true" />
+                  <p className="font-sans text-sm text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
+                    Acepta las cookies para ver el mapa interactivo.
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <button
+                      onClick={accept}
+                      className="btn-primary text-xs px-5 py-2.5"
+                      aria-label="Aceptar cookies y ver mapa"
+                    >
+                      Aceptar cookies
+                    </button>
+                    <a
+                      href="https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-sans text-xs text-text-muted underline underline-offset-2 hover:text-text transition-colors"
+                      style={{ fontWeight: 500 }}
+                    >
+                      {t.contact.openMaps}
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

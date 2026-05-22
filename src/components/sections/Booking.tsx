@@ -13,7 +13,7 @@ import {
   type Servicio,
 } from '@/lib/constants'
 import { useLang } from '@/lib/i18n'
-import { NUM_PERSONAL } from '@/lib/store'
+import { NUM_PERSONAL } from '@/lib/constants'
 import { createBookingAsync, getHorasOcupadasByFechaAsync, getSlotsBloqueadosAsync } from '@/lib/supabase-store'
 import { enviarConfirmacion, enviarNotificacionNegocio } from '@/lib/email'
 import type { Booking as BookingType } from '@/lib/types'

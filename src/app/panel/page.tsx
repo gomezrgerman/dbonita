@@ -7,7 +7,7 @@ import {
   Clock, Phone, Mail, ChevronLeft, ChevronRight, Ban,
   BarChart2, ExternalLink, AlertTriangle,
 } from 'lucide-react'
-import { NUM_PERSONAL } from '@/lib/store'
+import { NUM_PERSONAL } from '@/lib/constants'
 import {
   getBookingsAsync, updateBookingEstadoAsync, createBookingAsync,
   getClientesAsync, getHistorialClienteAsync,

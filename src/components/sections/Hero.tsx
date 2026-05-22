@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Script from 'next/script'
 import { useLang } from '@/lib/i18n'
+import { useCookieConsent } from '@/lib/cookie-consent'
 
 declare global {
   interface Window {
@@ -28,6 +29,7 @@ const MAX_PX = 20  // máximo desplazamiento en píxeles
 export default function Hero() {
   const bgRef = useRef<HTMLDivElement>(null)
   const { t } = useLang()
+  const { consent } = useCookieConsent()
 
   const reservar = () => {
     document.getElementById('servicios')?.scrollIntoView({ behavior: 'smooth' })
@@ -207,11 +209,13 @@ export default function Hero() {
         />
       </motion.div>
 
-      <Script
-        src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.12/dist/unicornStudio.umd.js"
-        strategy="afterInteractive"
-        onLoad={() => { window.UnicornStudio?.init() }}
-      />
+      {consent === 'accepted' && (
+        <Script
+          src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.12/dist/unicornStudio.umd.js"
+          strategy="afterInteractive"
+          onLoad={() => { window.UnicornStudio?.init() }}
+        />
+      )}
     </section>
   )
 }
