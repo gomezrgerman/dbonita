@@ -984,13 +984,13 @@ export default function PanelPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           <motion.div
             key={vista}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
           >
             {vista === 'citas'        && <VistaCitas onRefresh={() => setRefreshKey((k) => k + 1)} />}
             {vista === 'clientes'     && <VistaClientes key={refreshKey} />}
