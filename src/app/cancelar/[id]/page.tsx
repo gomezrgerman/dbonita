@@ -73,7 +73,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
 
           {estado === 'no-encontrada' && (
             <div className="flex flex-col items-center gap-4 text-center">
-              <XCircle size={48} className="text-red-400" />
+              <XCircle size={48} style={{ color: 'var(--color-pomegranate)' }} />
               <h1 className="text-2xl text-text" style={{ fontWeight: 700 }}>Reserva no encontrada</h1>
               <p className="text-sm text-text-muted">
                 No hemos encontrado ninguna reserva con ese identificador. Comprueba el enlace de tu email.
@@ -84,7 +84,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
 
           {estado === 'ya-cancelada' && booking && (
             <div className="flex flex-col items-center gap-4 text-center">
-              <AlertTriangle size={48} className="text-yellow-500" />
+              <AlertTriangle size={48} style={{ color: 'var(--color-brand)' }} />
               <h1 className="text-2xl text-text" style={{ fontWeight: 700 }}>Ya está cancelada</h1>
               <p className="text-sm text-text-muted">
                 La cita de <strong>{booking.clienteNombre}</strong> del <strong>{formatFecha(booking.fecha)}</strong> ya fue cancelada.
@@ -95,7 +95,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
 
           {estado === 'completada' && booking && (
             <div className="flex flex-col items-center gap-4 text-center">
-              <CheckCircle size={48} className="text-blue-400" />
+              <CheckCircle size={48} style={{ color: 'var(--color-brand-blue)' }} />
               <h1 className="text-2xl text-text" style={{ fontWeight: 700 }}>La cita ya se realizó</h1>
               <a href="/#reservar" className="btn-primary text-xs mt-2">Reservar nueva cita</a>
             </div>
@@ -103,12 +103,15 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
 
           {estado === 'fuera-plazo' && booking && (
             <div className="flex flex-col items-center gap-4 text-center">
-              <Clock size={48} className="text-red-400" />
+              <Clock size={48} style={{ color: 'var(--color-pomegranate)' }} />
               <h1 className="text-2xl text-text" style={{ fontWeight: 700 }}>Cancelación fuera de plazo</h1>
-              <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-left w-full">
-                <p className="text-sm text-red-700 leading-relaxed">
-                  Tu cita es en menos de <strong>24 horas</strong>. La señal de{' '}
-                  <strong>{booking.importePagado}€</strong> no es reembolsable pasado este plazo según nuestra política de cancelación.
+              <div
+                className="p-4 rounded-xl text-left w-full"
+                style={{ background: 'var(--color-surface)', border: '1px solid var(--color-accent)' }}
+              >
+                <p className="text-sm text-text-muted leading-relaxed">
+                  Tu cita es en menos de <strong className="text-text">24 horas</strong>. La señal de{' '}
+                  <strong className="text-text">{booking.importePagado}€</strong> no es reembolsable pasado este plazo según nuestra política de cancelación.
                 </p>
               </div>
               <p className="text-sm text-text-muted">
@@ -119,7 +122,8 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
                   href="https://wa.me/34657332722?text=Hola, tengo una cita mañana y necesito cancelarla"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3 bg-green-500 text-white text-sm rounded-xl font-medium hover:bg-green-600 transition-colors text-center"
+                  className="w-full py-3 text-white text-sm rounded-xl text-center transition-colors duration-200"
+                  style={{ background: '#25D366', fontWeight: 600 }}
                 >
                   Escribir por WhatsApp
                 </a>
@@ -150,7 +154,8 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
                 <button
                   onClick={confirmarCancelacion}
                   disabled={cancelando}
-                  className="w-full py-3 bg-red-500 text-white text-sm rounded-xl font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                  className="w-full py-3 text-white text-sm rounded-xl transition-colors duration-200 disabled:opacity-50"
+                  style={{ background: 'var(--color-pomegranate)', fontWeight: 600 }}
                 >
                   {cancelando ? 'Cancelando...' : 'Sí, cancelar mi cita'}
                 </button>
@@ -167,7 +172,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
           {estado === 'cancelada-ok' && booking && (
             <div className="flex flex-col items-center gap-4 text-center">
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200 }}>
-                <CheckCircle size={56} className="text-green-500" />
+                <CheckCircle size={56} style={{ color: 'var(--color-brand)' }} />
               </motion.div>
               <h1 className="text-2xl text-text" style={{ fontWeight: 700 }}>Cita cancelada</h1>
               <p className="text-sm text-text-muted leading-relaxed">

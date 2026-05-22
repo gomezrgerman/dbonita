@@ -75,7 +75,7 @@ const KNOWLEDGE: KnowledgeEntry[] = [
   },
   {
     keywords: ['horario', 'horarios', 'cuando', 'que dias', 'abri', 'abierto', 'atendeis', 'horario de apertura', 'apertura'],
-    response: `Nuestro horario es:\n\n📅 **Lunes a viernes**: 10:00 – 14:00 y 16:00 – 20:00\n📅 **Sábados**: 10:00 – 14:00\n📅 **Domingos**: Cerrado\n\nPuedes reservar tu cita directamente desde la web en cualquier momento.`,
+    response: `Nuestro horario es:\n\n📅 **Lunes a viernes**: 10:00 – 19:00\n📅 **Sábados y domingos**: Cerrado\n\nPuedes reservar tu cita directamente desde la web en cualquier momento.`,
     quickReplies: ['Quiero reservar cita', '¿Dónde estáis ubicados?'],
   },
   {

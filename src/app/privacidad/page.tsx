@@ -97,8 +97,17 @@ export default function PrivacidadPage() {
 
           <section>
             <h2 className="font-bold text-black text-base mb-3">7. Cookies</h2>
+            <p className="mb-3">
+              Esta web utiliza cookies técnicas necesarias para el funcionamiento del proceso de reserva y el panel de administración. Con tu consentimiento explícito también se cargan recursos de terceros que pueden establecer cookies propias:
+            </p>
+            <ul className="list-disc pl-5 flex flex-col gap-1 mb-3">
+              <li><strong>Google Maps (Google LLC)</strong> — mapa interactivo de ubicación del estudio. Solo se carga si aceptas las cookies.</li>
+              <li><strong>UnicornStudio (Hiunicorn Studio)</strong> — animación de fondo del hero. Solo se carga si aceptas las cookies.</li>
+              <li><strong>Stripe Inc.</strong> — pasarela de pago para la señal de reserva. Necesario para completar el proceso.</li>
+              <li><strong>Google Fonts (Google LLC)</strong> — tipografías del sitio.</li>
+            </ul>
             <p>
-              Esta web utiliza cookies técnicas necesarias para el funcionamiento del proceso de reserva y el panel de administración. También se cargan recursos de terceros (Google Fonts, Stripe) que pueden establecer cookies propias. Puedes gestionar las cookies desde la configuración de tu navegador.
+              Puedes retirar tu consentimiento en cualquier momento recargando la página y pulsando «Rechazar» en el aviso de cookies, o gestionando las cookies desde la configuración de tu navegador.
             </p>
           </section>
 

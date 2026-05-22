@@ -7,13 +7,14 @@ import { useRouter } from 'next/navigation'
 
 export default function PanelLoginPage() {
   const [pass, setPass] = useState('')
-  const [error, setError] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [cargando, setCargando] = useState(false)
   const router = useRouter()
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setCargando(true)
+    setErrorMsg(null)
     try {
       const res = await fetch('/api/panel/auth', {
         method: 'POST',
@@ -23,11 +24,12 @@ export default function PanelLoginPage() {
       if (res.ok) {
         router.push('/panel')
       } else {
-        setError(true)
+        const data = await res.json().catch(() => ({}))
+        setErrorMsg(data.message ?? 'Contraseña incorrecta')
         setPass('')
       }
     } catch {
-      setError(true)
+      setErrorMsg('Error de conexión. Inténtalo de nuevo.')
       setPass('')
     } finally {
       setCargando(false)
@@ -62,15 +64,15 @@ export default function PanelLoginPage() {
                 autoFocus
                 required
                 value={pass}
-                onChange={(e) => { setPass(e.target.value); setError(false) }}
+                onChange={(e) => { setPass(e.target.value); setErrorMsg(null) }}
                 className={`w-full bg-surface border px-4 py-3 pl-10 font-sans text-sm font-light text-text focus:outline-none transition-colors duration-200 ${
-                  error ? 'border-red-300 focus:border-red-400' : 'border-accent focus:border-primary'
+                  errorMsg ? 'border-red-300 focus:border-red-400' : 'border-accent focus:border-primary'
                 }`}
                 placeholder="••••••••"
               />
             </div>
-            {error && (
-              <p className="font-sans text-xs font-light text-red-500">Contraseña incorrecta</p>
+            {errorMsg && (
+              <p className="font-sans text-xs font-light text-red-500">{errorMsg}</p>
             )}
           </div>
           <button

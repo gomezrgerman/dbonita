@@ -99,6 +99,9 @@ export default function Hero() {
       id="inicio"
       className="relative min-h-screen flex items-end overflow-hidden bg-black"
       aria-label="Sección principal"
+      style={consent !== 'accepted' ? {
+        background: 'radial-gradient(ellipse at 25% 70%, #1e0a3c 0%, #0d0d1a 45%, #000 100%)',
+      } : undefined}
     >
       {/*
         Wrapper sobredimensionado: MAX_PX px de margen en cada lado.

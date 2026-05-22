@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Home, Sparkles, Image, User, Calendar } from 'lucide-react'
 import { NAV_LINKS } from '@/lib/constants'
@@ -39,17 +39,15 @@ function LangToggle({ scrolled }: { scrolled: boolean }) {
       style={{ fontFamily: '"Space Mono", monospace', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.08em' }}
     >
       {(['es', 'en'] as const).map((l, i) => (
-        <>
+        <Fragment key={l}>
           {i > 0 && (
             <span
-              key={`sep-${l}`}
               style={{ color: scrolled ? 'var(--color-accent)' : 'rgba(255,255,255,0.25)', padding: '0 2px' }}
             >
               ·
             </span>
           )}
           <button
-            key={l}
             onClick={() => setLang(l)}
             className="px-1.5 py-0.5 rounded transition-all duration-200"
             style={{
@@ -63,7 +61,7 @@ function LangToggle({ scrolled }: { scrolled: boolean }) {
           >
             {l.toUpperCase()}
           </button>
-        </>
+        </Fragment>
       ))}
     </div>
   )
