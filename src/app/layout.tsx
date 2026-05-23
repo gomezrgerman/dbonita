@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Space_Mono } from 'next/font/google'
 import Chatbot from '@/components/Chatbot'
 import CookieBanner from '@/components/ui/CookieBanner'
 import { CookieConsentProvider } from '@/lib/cookie-consent'
+import { LangProvider } from '@/lib/i18n'
 import './globals.css'
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -100,11 +101,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="bg-bg text-text antialiased">
-        <CookieConsentProvider>
-          {children}
-          <Chatbot />
-          <CookieBanner />
-        </CookieConsentProvider>
+        <LangProvider>
+          <CookieConsentProvider>
+            {children}
+            <Chatbot />
+            <CookieBanner />
+          </CookieConsentProvider>
+        </LangProvider>
       </body>
     </html>
   )

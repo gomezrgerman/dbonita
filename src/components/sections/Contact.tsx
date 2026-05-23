@@ -198,15 +198,15 @@ export default function Contact() {
                 >
                   <MapPin size={28} className="text-primary" aria-hidden="true" />
                   <p className="font-sans text-sm text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
-                    Acepta las cookies para ver el mapa interactivo.
+                    {t.contact.mapCookieMsg}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center gap-3">
                     <button
                       onClick={accept}
                       className="btn-primary text-xs px-5 py-2.5"
-                      aria-label="Aceptar cookies y ver mapa"
+                      aria-label={t.contact.mapAcceptBtn}
                     >
-                      Aceptar cookies
+                      {t.contact.mapAcceptBtn}
                     </button>
                     <a
                       href="https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante"

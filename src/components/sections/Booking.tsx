@@ -25,11 +25,6 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 const HORARIO = [
   { apertura: 10 * 60, cierre: 19 * 60 },
 ]
-const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-const MESES = [
-  'Enero','Febrero','Marzo','Abril','Mayo','Junio',
-  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre',
-]
 const DIAS_CERRADO = [0, 6]
 
 function toFechaStr(year: number, month: number, day: number): string {
@@ -96,23 +91,18 @@ interface FormData {
   notas: string
 }
 
-const PASOS_INFO = [
-  { key: 'servicios', label: 'Servicios' },
-  { key: 'calendario', label: 'Fecha y hora' },
-  { key: 'datos', label: 'Datos' },
-  { key: 'pago', label: 'Pago' },
-]
+const PASO_KEYS = ['servicios', 'calendario', 'datos', 'pago']
 
-function StepIndicator({ paso }: { paso: Paso }) {
+function StepIndicator({ paso, steps }: { paso: Paso; steps: string[] }) {
   const orden = ['servicios', 'calendario', 'datos', 'pago', 'confirmado']
   const actual = orden.indexOf(paso)
   return (
     <div className="flex items-center gap-0 mb-10 lg:mb-12" role="list" aria-label="Pasos del proceso de reserva">
-      {PASOS_INFO.map((p, i) => {
+      {PASO_KEYS.map((key, i) => {
         const completado = i < actual
         const enCurso = i === actual
         return (
-          <div key={p.key} className="flex items-center" role="listitem">
+          <div key={key} className="flex items-center" role="listitem">
             <div className="flex flex-col items-center gap-1.5">
               <div
                 className="w-8 h-8 rounded-card flex items-center justify-center text-xs font-sans transition-colors duration-300"
@@ -130,10 +120,10 @@ function StepIndicator({ paso }: { paso: Paso }) {
                 className="label-upper hidden sm:block"
                 style={{ color: enCurso ? '#000' : completado ? 'var(--color-text-muted)' : 'var(--color-accent)' }}
               >
-                {p.label}
+                {steps[i]}
               </span>
             </div>
-            {i < PASOS_INFO.length - 1 && (
+            {i < PASO_KEYS.length - 1 && (
               <div
                 className="h-px w-10 sm:w-16 mx-1 mb-5 transition-colors duration-300"
                 style={{ background: i < actual ? '#000' : 'var(--color-accent)' }}
@@ -157,9 +147,10 @@ interface PagoFormProps {
   duracionTotal: number
   clientSecret: string
   onExito: (booking: BookingType) => void
+  tPayment: { paying: string; payBtn: string; errorPayment: string; errorSave: string }
 }
 
-function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, clientSecret, onExito }: PagoFormProps) {
+function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, clientSecret, onExito, tPayment }: PagoFormProps) {
   const stripe = useStripe()
   const elements = useElements()
   const [pagando, setPagando] = useState(false)
@@ -188,7 +179,7 @@ function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, cl
     })
 
     if (error) {
-      setErrorPago(error.message ?? 'Error al procesar el pago.')
+      setErrorPago(error.message ?? tPayment.errorPayment)
       setPagando(false)
       return
     }
@@ -215,7 +206,7 @@ function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, cl
       })
       onExito(booking)
     } catch {
-      setErrorPago('Pago realizado pero hubo un error al guardar la cita. Contáctanos por WhatsApp.')
+      setErrorPago(tPayment.errorSave)
       setPagando(false)
     }
   }
@@ -260,14 +251,15 @@ function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, cl
           e.currentTarget.style.background = pagando || !stripe || !elements || !elementoCompleto ? 'var(--color-accent)' : '#000'
         }}
       >
-        {pagando ? 'Procesando pago...' : 'Pagar señal — 10 €'}
+        {pagando ? tPayment.paying : tPayment.payBtn}
       </button>
     </form>
   )
 }
 
 export default function Booking() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
+  const cal = t.booking.calendar
   const hoy = new Date()
   const sectionRef = useRef<HTMLElement>(null)
   const [paso, setPaso] = useState<Paso>('servicios')
@@ -344,6 +336,7 @@ export default function Booking() {
   }, [carrito])
 
   const fechaStr = diaSeleccionado ? toFechaStr(año, mes, diaSeleccionado) : ''
+  const monthName = cal.months[mes]
 
   useEffect(() => {
     getSlotsBloqueadosAsync().then((bloqueos) => {
@@ -395,7 +388,10 @@ export default function Booking() {
 
   const diasMes = getDiasDelMes(año, mes)
   const fechaFormateada = diaSeleccionado
-    ? `${diaSeleccionado} de ${MESES[mes]} de ${año}`
+    ? cal.dateFormatted
+        .replace('{day}', String(diaSeleccionado))
+        .replace('{month}', monthName)
+        .replace('{year}', String(año))
     : ''
 
   const toggleCarrito = (id: string) => {
@@ -435,11 +431,11 @@ export default function Booking() {
     if (carrito.length === 0 || !diaSeleccionado || !horaSeleccionada) return
 
     if (!emailValido(form.email)) {
-      setError('El email no tiene un formato válido.')
+      setError(t.booking.form.errorEmail)
       return
     }
     if (!telefonoValido(form.telefono)) {
-      setError('El teléfono debe tener al menos 9 dígitos.')
+      setError(t.booking.form.errorPhone)
       return
     }
 
@@ -462,11 +458,11 @@ export default function Booking() {
         }),
       })
       const data = await res.json()
-      if (!res.ok || !data.clientSecret) throw new Error(data.error ?? 'Error al iniciar el pago')
+      if (!res.ok || !data.clientSecret) throw new Error(data.error ?? t.booking.form.errorInit)
       setClientSecret(data.clientSecret)
       setPaso('pago')
     } catch {
-      setError('No se pudo iniciar el pago. Inténtalo de nuevo.')
+      setError(t.booking.form.errorInit)
     } finally {
       setEnviando(false)
     }
@@ -513,17 +509,17 @@ export default function Booking() {
           </motion.h2>
         </div>
 
-        {paso !== 'confirmado' && <StepIndicator paso={paso} />}
+        {paso !== 'confirmado' && <StepIndicator paso={paso} steps={t.booking.steps} />}
 
         {(paso === 'calendario' || paso === 'datos' || paso === 'pago') && (
           <button
             onClick={volver}
             className="flex items-center gap-2 text-xs text-text-muted mb-6 transition-colors duration-200 hover:text-black"
             style={{ fontFamily: '"Space Mono", monospace' }}
-            aria-label="Volver al paso anterior"
+            aria-label={t.booking.back}
           >
             <ArrowLeft size={13} aria-hidden="true" />
-            Volver
+            {t.booking.back}
           </button>
         )}
 
@@ -540,7 +536,7 @@ export default function Booking() {
               {/* Left: category accordion */}
               <div className="lg:col-span-2">
                 <p className="text-sm text-text-muted mb-5 leading-relaxed" style={{ fontWeight: 400 }}>
-                  Selecciona uno o más tratamientos. Puedes combinar servicios y se calculará la duración total.
+                  {t.booking.cart.intro}
                 </p>
 
                 <div className="flex flex-col gap-2">
@@ -573,7 +569,7 @@ export default function Booking() {
                           </div>
                           <div className="flex items-center gap-3">
                             <span className="label-upper text-text-muted hidden sm:block">
-                              {catServicios.length} {catServicios.length === 1 ? 'servicio' : 'servicios'}
+                              {catServicios.length} {catServicios.length === 1 ? t.booking.serviceSingular : t.booking.servicePlural}
                             </span>
                             <span
                               className="w-6 h-6 rounded-card flex items-center justify-center transition-colors duration-200"
@@ -661,7 +657,7 @@ export default function Booking() {
                 >
                   <div className="flex items-center gap-2">
                     <ShoppingCart size={18} aria-hidden="true" />
-                    <h3 className="text-base text-black" style={{ fontWeight: 700 }}>Tu cita</h3>
+                    <h3 className="text-base text-black" style={{ fontWeight: 700 }}>{t.booking.cart.title}</h3>
                     {carrito.length > 0 && (
                       <span
                         className="w-5 h-5 rounded-full flex items-center justify-center text-xs text-white ml-auto"
@@ -674,7 +670,7 @@ export default function Booking() {
 
                   {carrito.length === 0 ? (
                     <p className="text-sm text-text-muted" style={{ fontWeight: 400 }}>
-                      Selecciona los tratamientos que desees.
+                      {t.booking.cart.empty}
                     </p>
                   ) : (
                     <>
@@ -710,15 +706,15 @@ export default function Booking() {
 
                       <div className="border-t border-black/10 pt-3 flex flex-col gap-1">
                         <div className="flex justify-between text-sm">
-                          <span className="text-text-muted" style={{ fontWeight: 400 }}>Duración total</span>
+                          <span className="text-text-muted" style={{ fontWeight: 400 }}>{t.booking.totalDuration}</span>
                           <span className="text-black" style={{ fontWeight: 700, fontFamily: '"Space Mono", monospace' }}>
                             {formatDuracion(duracionTotal)}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-text-muted" style={{ fontWeight: 400 }}>Total</span>
+                          <span className="text-text-muted" style={{ fontWeight: 400 }}>{t.booking.total}</span>
                           <span className="text-black" style={{ fontWeight: 800 }}>
-                            {precioTotal > 0 ? `${precioTotal}€` : 'A consultar'}
+                            {precioTotal > 0 ? `${precioTotal}€` : t.booking.toConsult}
                           </span>
                         </div>
                       </div>
@@ -735,7 +731,7 @@ export default function Booking() {
                         }}
                         className="btn-primary w-full mt-2 flex items-center justify-center gap-2"
                       >
-                        Elegir fecha y hora
+                        {t.booking.cart.chooseDate}
                         <ArrowRight size={15} aria-hidden="true" />
                       </button>
                     </>
@@ -759,7 +755,7 @@ export default function Booking() {
                   className="clay-card p-4 flex flex-col gap-1"
                   style={{ borderRadius: '16px', background: '#f5f0ff', borderColor: 'var(--color-ube-light)' }}
                 >
-                  <span className="label-upper text-text-muted">Servicios seleccionados</span>
+                  <span className="label-upper text-text-muted">{cal.servicesSelected}</span>
                   {serviciosEnCarrito.map((s) => (
                     <p key={s.id} className="text-sm text-black" style={{ fontWeight: 600 }}>
                       {s.nombre} <span className="text-text-muted" style={{ fontWeight: 400, fontFamily: '"Space Mono", monospace' }}>· {s.duracion}</span>
@@ -768,7 +764,7 @@ export default function Booking() {
                   <div className="flex justify-between pt-2 mt-1 border-t border-black/10">
                     <span className="label-upper text-text-muted">Total</span>
                     <span className="text-sm" style={{ fontWeight: 700, fontFamily: '"Space Mono", monospace' }}>
-                      {formatDuracion(duracionTotal)} · {precioTotal > 0 ? `${precioTotal}€` : 'A consultar'}
+                      {formatDuracion(duracionTotal)} · {precioTotal > 0 ? `${precioTotal}€` : t.booking.toConsult}
                     </span>
                   </div>
                 </div>
@@ -777,28 +773,28 @@ export default function Booking() {
                   <div className="flex items-center justify-between mb-5">
                     <button
                       onClick={mesPrevio}
+                      aria-label={cal.prevMonth}
                       className="w-9 h-9 rounded-card border border-accent flex items-center justify-center text-text-muted transition-all duration-200"
                       onMouseEnter={(e) => { e.currentTarget.style.transform = 'rotateZ(-4deg) translateY(-2px)'; e.currentTarget.style.boxShadow = 'rgb(0,0,0) -3px 3px' }}
                       onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
-                      aria-label="Mes anterior"
                     >
                       <ChevronLeft size={16} />
                     </button>
                     <h3 className="text-base text-black" style={{ fontWeight: 700 }}>
-                      {MESES[mes]} {año}
+                      {monthName} {año}
                     </h3>
                     <button
                       onClick={mesSiguiente}
+                      aria-label={cal.nextMonth}
                       className="w-9 h-9 rounded-card border border-accent flex items-center justify-center text-text-muted transition-all duration-200"
                       onMouseEnter={(e) => { e.currentTarget.style.transform = 'rotateZ(-4deg) translateY(-2px)'; e.currentTarget.style.boxShadow = 'rgb(0,0,0) -3px 3px' }}
                       onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
-                      aria-label="Mes siguiente"
                     >
                       <ChevronRight size={16} />
                     </button>
                   </div>
                   <div className="grid grid-cols-7 mb-2">
-                    {DIAS_SEMANA.map((d) => (
+                    {cal.days.map((d) => (
                       <div key={d} className="text-center label-upper text-text-muted py-1">{d}</div>
                     ))}
                   </div>
@@ -814,7 +810,7 @@ export default function Booking() {
                           key={dia}
                           onClick={() => elegirDia(dia)}
                           disabled={noDisp}
-                          aria-label={`${dia} de ${MESES[mes]}${noDisp ? ', no disponible' : ''}`}
+                          aria-label={`${dia} ${monthName}${noDisp ? cal.notAvailable : ''}`}
                           className="aspect-square flex items-center justify-center text-sm rounded-card transition-all duration-200"
                           style={{
                             fontWeight: esSeleccionado ? 700 : 400,
@@ -833,11 +829,11 @@ export default function Booking() {
                   <div className="flex gap-4 mt-4 pt-4 border-t border-accent">
                     <div className="flex items-center gap-1.5">
                       <div className="w-3 h-3 rounded-sharp" style={{ border: '1.5px solid var(--color-pomegranate)' }} />
-                      <span className="label-upper text-text-muted">Hoy</span>
+                      <span className="label-upper text-text-muted">{cal.today}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <div className="w-3 h-3 rounded-sharp bg-accent" />
-                      <span className="label-upper text-text-muted">No disponible</span>
+                      <span className="label-upper text-text-muted">{cal.unavailable}</span>
                     </div>
                   </div>
                 </div>
@@ -853,14 +849,14 @@ export default function Booking() {
                       exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.25 }}
                       className="flex flex-col gap-4"
                     >
-                      <p className="text-xl text-black" style={{ fontWeight: 700 }}>¿Qué día te viene mejor?</p>
+                      <p className="text-xl text-black" style={{ fontWeight: 700 }}>{cal.whichDay}</p>
                       <p className="text-sm text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
-                        Los huecos se ajustan a la duración total de tus servicios ({formatDuracion(duracionTotal)}).
+                        {cal.slotsAdjust.replace('{dur}', formatDuracion(duracionTotal))}
                       </p>
                       <div className="clay-card p-4" style={{ borderRadius: '16px' }}>
-                        <span className="label-upper text-text-muted block mb-2">Horario del estudio</span>
-                        <p className="text-sm text-black mb-0.5" style={{ fontWeight: 400 }}>Lunes a viernes · 10:00–19:00</p>
-                        <p className="text-xs text-text-muted" style={{ fontWeight: 400 }}>Sábados y domingos cerrado</p>
+                        <span className="label-upper text-text-muted block mb-2">{cal.studioHours}</span>
+                        <p className="text-sm text-black mb-0.5" style={{ fontWeight: 400 }}>{cal.hoursWeekday}</p>
+                        <p className="text-xs text-text-muted" style={{ fontWeight: 400 }}>{cal.hoursClosed}</p>
                       </div>
                     </motion.div>
                   ) : (
@@ -876,16 +872,16 @@ export default function Booking() {
                         <div className="clay-card p-5 flex items-start gap-3" style={{ borderRadius: '16px' }}>
                           <AlertCircle size={18} className="flex-shrink-0 mt-0.5" style={{ color: 'var(--color-pomegranate)' }} aria-hidden="true" />
                           <div>
-                            <p className="text-sm text-black mb-1" style={{ fontWeight: 700 }}>No hay horarios disponibles</p>
+                            <p className="text-sm text-black mb-1" style={{ fontWeight: 700 }}>{cal.noSlots}</p>
                             <p className="text-xs text-text-muted" style={{ fontWeight: 400 }}>
-                              Todos los slots están ocupados. Elige otra fecha en el calendario.
+                              {cal.noSlotsDesc}
                             </p>
                           </div>
                         </div>
                       ) : (
                         <>
                           <p className="text-sm text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
-                            Bloques de <strong className="text-black" style={{ fontWeight: 700 }}>{formatDuracion(duracionTotal)}</strong>. Solo se muestran huecos disponibles.
+                            {cal.slotsHint.replace('{dur}', formatDuracion(duracionTotal))}
                           </p>
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {slotsDisponibles.map((hora) => {
@@ -936,8 +932,8 @@ export default function Booking() {
                             }}
                           >
                             {horaSeleccionada
-                              ? `Continuar — ${fechaFormateada} · ${horaSeleccionada}`
-                              : 'Selecciona un horario'}
+                              ? `${cal.continueBtnPre}${fechaFormateada} · ${horaSeleccionada}`
+                              : cal.selectTime}
                           </button>
                         </>
                       )}
@@ -960,7 +956,7 @@ export default function Booking() {
                 className="clay-card p-4 flex flex-col gap-2 mb-8"
                 style={{ borderRadius: '16px', background: '#f5f0ff', borderColor: 'var(--color-ube-light)' }}
               >
-                <span className="label-upper text-text-muted">Tu cita</span>
+                <span className="label-upper text-text-muted">{t.booking.form.yourAppointment}</span>
                 <p className="text-base text-black" style={{ fontWeight: 700 }}>
                   {fechaFormateada} · {horaSeleccionada}
                 </p>
@@ -972,7 +968,7 @@ export default function Booking() {
                   ))}
                 </div>
                 <div className="flex justify-between pt-2 mt-1 border-t border-black/10">
-                  <span className="text-xs text-text-muted" style={{ fontWeight: 400 }}>Duración total</span>
+                  <span className="text-xs text-text-muted" style={{ fontWeight: 400 }}>{t.booking.totalDuration}</span>
                   <span className="text-xs text-black" style={{ fontWeight: 700, fontFamily: '"Space Mono", monospace' }}>{formatDuracion(duracionTotal)}</span>
                 </div>
                 <button
@@ -980,7 +976,7 @@ export default function Booking() {
                   className="text-xs text-text-muted underline underline-offset-2 hover:text-black transition-colors self-start mt-1"
                   style={{ fontWeight: 500 }}
                 >
-                  Cambiar servicios
+                  {t.booking.form.changeServices}
                 </button>
               </div>
 
@@ -994,12 +990,12 @@ export default function Booking() {
               <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="nombre" className="label-upper text-text-muted">Nombre completo *</label>
+                    <label htmlFor="nombre" className="label-upper text-text-muted">{t.booking.form.nameLabel}</label>
                     <input
                       id="nombre" type="text" required
                       value={form.nombre}
                       onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
-                      placeholder="Tu nombre"
+                      placeholder={t.booking.form.namePlaceholder}
                       className="w-full px-4 py-3 rounded-card border border-accent bg-white text-sm text-black placeholder:text-text-muted/50 focus:outline-none transition-colors duration-200"
                       style={{ fontWeight: 400, boxShadow: 'var(--shadow-clay)' }}
                       onFocus={(e) => { e.currentTarget.style.borderColor = '#000' }}
@@ -1007,7 +1003,7 @@ export default function Booking() {
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="telefono" className="label-upper text-text-muted">Teléfono *</label>
+                    <label htmlFor="telefono" className="label-upper text-text-muted">{t.booking.form.phoneLabel}</label>
                     <input
                       id="telefono" type="tel" required
                       value={form.telefono}
@@ -1019,33 +1015,33 @@ export default function Booking() {
                       onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-accent)' }}
                     />
                     <p className="text-xs text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
-                      Te enviaremos un recordatorio de la cita por WhatsApp o SMS.
+                      {t.booking.form.phoneHint}
                     </p>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="email" className="label-upper text-text-muted">Email *</label>
+                  <label htmlFor="email" className="label-upper text-text-muted">{t.booking.form.emailLabel}</label>
                   <input
                     id="email" type="email" required
                     value={form.email}
                     onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                    placeholder="tu@email.com"
+                    placeholder="your@email.com"
                     className="w-full px-4 py-3 rounded-card border border-accent bg-white text-sm text-black placeholder:text-text-muted/50 focus:outline-none transition-colors duration-200"
                     style={{ fontWeight: 400, boxShadow: 'var(--shadow-clay)' }}
                     onFocus={(e) => { e.currentTarget.style.borderColor = '#000' }}
                     onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-accent)' }}
                   />
                   <p className="text-xs text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
-                    Recibirás la confirmación de la reserva en este correo.
+                    {t.booking.form.emailHint}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="notas" className="label-upper text-text-muted">Notas adicionales</label>
+                  <label htmlFor="notas" className="label-upper text-text-muted">{t.booking.form.notesLabel}</label>
                   <textarea
                     id="notas" rows={3}
                     value={form.notas}
                     onChange={(e) => setForm((f) => ({ ...f, notas: e.target.value }))}
-                    placeholder="¿Primera visita? ¿Alguna alergia? ¿Diseño en mente para las uñas?"
+                    placeholder={t.booking.form.notesPlaceholder}
                     className="w-full px-4 py-3 rounded-card border border-accent bg-white text-sm text-black placeholder:text-text-muted/50 focus:outline-none transition-colors duration-200 resize-none"
                     style={{ fontWeight: 400, boxShadow: 'var(--shadow-clay)' }}
                     onFocus={(e) => { e.currentTarget.style.borderColor = '#000' }}
@@ -1054,11 +1050,9 @@ export default function Booking() {
                 </div>
 
                 <div className="clay-card p-4 flex flex-col gap-1.5" style={{ borderRadius: '12px' }}>
-                  <p className="text-xs text-black" style={{ fontWeight: 700 }}>Política de reserva</p>
+                  <p className="text-xs text-black" style={{ fontWeight: 700 }}>{t.booking.form.policyTitle}</p>
                   <p className="text-xs text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
-                    Se requiere una señal de <strong className="text-black" style={{ fontWeight: 700 }}>10€</strong> para confirmar la cita.
-                    La cancelación es gratuita hasta <strong className="text-black" style={{ fontWeight: 700 }}>24 horas antes</strong>.
-                    Pasado ese plazo, la señal no es reembolsable.
+                    {t.booking.form.policyBody}
                   </p>
                 </div>
 
@@ -1085,7 +1079,7 @@ export default function Booking() {
                     e.currentTarget.style.background = enviando || !form.nombre || !form.telefono || !form.email ? 'var(--color-accent)' : '#000'
                   }}
                 >
-                  {enviando ? 'Preparando pago...' : 'Ir al pago — señal 10 €'}
+                  {enviando ? t.booking.form.submitPreparing : t.booking.form.submitBtn}
                 </button>
               </form>
             </motion.div>
@@ -1104,7 +1098,7 @@ export default function Booking() {
                 className="clay-card p-4 flex flex-col gap-2"
                 style={{ borderRadius: '16px', background: '#f5f0ff', borderColor: 'var(--color-ube-light)' }}
               >
-                <span className="label-upper text-text-muted">Tu cita</span>
+                <span className="label-upper text-text-muted">{t.booking.form.yourAppointment}</span>
                 <p className="text-base text-black" style={{ fontWeight: 700 }}>
                   {fechaFormateada} · {horaSeleccionada}
                 </p>
@@ -1121,10 +1115,9 @@ export default function Booking() {
               <div className="clay-card p-4 flex items-start gap-3" style={{ borderRadius: '14px' }}>
                 <CreditCard size={18} className="shrink-0 mt-0.5 text-black" aria-hidden="true" />
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm text-black" style={{ fontWeight: 700 }}>Señal de reserva — 10 €</p>
+                  <p className="text-sm text-black" style={{ fontWeight: 700 }}>{t.booking.payment.depositTitle}</p>
                   <p className="text-xs text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
-                    El cargo de <strong className="text-black" style={{ fontWeight: 700 }}>10 €</strong> confirma tu cita.
-                    El resto se abona en el estudio. Cancelación gratuita hasta 24 h antes.
+                    {t.booking.payment.depositBody}
                   </p>
                 </div>
               </div>
@@ -1134,7 +1127,7 @@ export default function Booking() {
                 stripe={stripePromise}
                 options={{
                   clientSecret,
-                  locale: 'es',
+                  locale: lang === 'es' ? 'es' : 'en',
                   appearance: {
                     theme: 'stripe',
                     variables: {
@@ -1156,19 +1149,24 @@ export default function Booking() {
                   duracionTotal={duracionTotal}
                   clientSecret={clientSecret}
                   onExito={handlePagoExito}
+                  tPayment={{
+                    ...t.booking.payment,
+                    errorPayment: t.booking.form.errorPayment,
+                    errorSave: t.booking.form.errorSave,
+                  }}
                 />
               </Elements>
 
               <p className="text-xs text-text-muted text-center" style={{ fontWeight: 400 }}>
-                ¿Tienes algún problema?{' '}
+                {t.booking.payment.helpText}{' '}
                 <a
-                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'}?text=Hola, necesito ayuda con mi reserva`}
+                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'}?text=${encodeURIComponent(t.booking.payment.helpWaMsg)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-black underline underline-offset-2"
                   style={{ fontWeight: 600 }}
                 >
-                  Escríbenos por WhatsApp
+                  {t.booking.payment.helpLink}
                 </a>
               </p>
             </motion.div>
@@ -1193,18 +1191,18 @@ export default function Booking() {
 
               <div className="flex flex-col gap-2">
                 <h3 className="text-black" style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 800, letterSpacing: '-0.03em' }}>
-                  ¡Cita confirmada!
+                  {t.booking.confirmed.title}
                 </h3>
                 <p className="text-sm text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
-                  Hemos registrado tu cita para el{' '}
-                  <strong className="text-black" style={{ fontWeight: 700 }}>{fechaFormateada}</strong>{' '}
-                  a las <strong className="text-black" style={{ fontWeight: 700 }}>{horaSeleccionada}</strong>.
-                  Te enviaremos la confirmación a <strong className="text-black" style={{ fontWeight: 700 }}>{form.email}</strong>.
+                  {t.booking.confirmed.body
+                    .replace('{fecha}', fechaFormateada)
+                    .replace('{hora}', horaSeleccionada ?? '')
+                    .replace('{email}', form.email)}
                 </p>
               </div>
 
               <div className="clay-card w-full text-left p-6 flex flex-col gap-2" style={{ borderRadius: '20px' }}>
-                <span className="label-upper text-text-muted block mb-1">Resumen de tu cita</span>
+                <span className="label-upper text-text-muted block mb-1">{t.booking.confirmed.summary}</span>
                 <p className="text-sm text-black" style={{ fontWeight: 700 }}>{form.nombre}</p>
                 <div className="flex flex-col gap-0.5">
                   {serviciosEnCarrito.map((s) => (
@@ -1217,7 +1215,7 @@ export default function Booking() {
                   {fechaFormateada} · {horaSeleccionada}
                 </p>
                 <div className="pt-3 mt-1 border-t border-accent">
-                  <span className="label-upper text-text-muted">Nº de reserva</span>
+                  <span className="label-upper text-text-muted">{t.booking.confirmed.bookingRef}</span>
                   <p className="text-xs text-black mt-0.5" style={{ fontFamily: '"Space Mono", monospace', fontWeight: 400 }}>
                     {reservaGuardada.id}
                   </p>
@@ -1226,19 +1224,19 @@ export default function Booking() {
 
               <div className="clay-card w-full text-left p-4" style={{ borderRadius: '16px' }}>
                 <p className="text-xs text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
-                  Cancelación gratuita hasta 24h antes.{' '}
+                  {t.booking.confirmed.cancelInfo}{' '}
                   <a
                     href={`/cancelar/${reservaGuardada.id}`}
                     className="text-black underline underline-offset-2"
                     style={{ fontFamily: '"Space Mono", monospace', fontWeight: 700 }}
                   >
-                    Cancelar mi cita
+                    {t.booking.confirmed.cancelLink}
                   </a>
                 </p>
               </div>
 
               <button onClick={resetear} className="btn-secondary text-sm">
-                Reservar otra cita
+                {t.booking.confirmed.bookAgain}
               </button>
             </motion.div>
           )}
@@ -1282,7 +1280,7 @@ export default function Booking() {
                     className="text-base text-black leading-snug flex-1"
                     style={{ fontWeight: 700, letterSpacing: '-0.02em' }}
                   >
-                    {mensajePersonalizado ?? '¿Añades algo más antes de elegir fecha?'}
+                    {mensajePersonalizado ?? t.booking.upsell.defaultMsg}
                   </p>
                   <button
                     onClick={() => setMostrarSugerencias(false)}
@@ -1303,7 +1301,7 @@ export default function Booking() {
                     </div>
                   ))}
                   <div className="flex justify-between pt-1.5 mt-1 border-t border-black/10">
-                    <span className="text-xs text-text-muted" style={{ fontWeight: 400 }}>Duración total</span>
+                    <span className="text-xs text-text-muted" style={{ fontWeight: 400 }}>{t.booking.upsell.totalDuration}</span>
                     <span className="text-xs text-black" style={{ fontWeight: 700, fontFamily: '"Space Mono", monospace' }}>
                       {formatDuracion(duracionTotal)}
                     </span>
@@ -1353,7 +1351,7 @@ export default function Booking() {
                             e.currentTarget.style.boxShadow = ''
                           }}
                         >
-                          {yaEnCarrito ? 'Añadido' : 'Añadir'}
+                          {yaEnCarrito ? t.booking.upsell.added : t.booking.upsell.add}
                         </button>
                       </div>
                     )
@@ -1366,12 +1364,16 @@ export default function Booking() {
                   style={{ background: '#f5f0ff' }}
                 >
                   <div>
-                    <span className="label-upper text-text-muted block">Total actualizado</span>
+                    <span className="label-upper text-text-muted block">{t.booking.upsell.updatedTotal}</span>
                     <span className="text-base text-black" style={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
-                      {formatDuracion(duracionTotal)} · {precioTotal > 0 ? `${precioTotal}€` : 'A consultar'}
+                      {formatDuracion(duracionTotal)} · {precioTotal > 0 ? `${precioTotal}€` : t.booking.toConsult}
                     </span>
                   </div>
-                  <span className="text-xs text-text-muted">{carrito.length} {carrito.length === 1 ? 'servicio' : 'servicios'}</span>
+                  <span className="text-xs text-text-muted">
+                    {carrito.length === 1
+                      ? t.booking.upsell.selectedSingular.replace('{n}', String(carrito.length))
+                      : t.booking.upsell.selectedPlural.replace('{n}', String(carrito.length))}
+                  </span>
                 </div>
 
                 <button
@@ -1383,7 +1385,7 @@ export default function Booking() {
                   }}
                   className="btn-primary w-full flex items-center justify-center gap-2"
                 >
-                  Continuar a fecha y hora
+                  {t.booking.upsell.continueBtn}
                   <ArrowRight size={15} aria-hidden="true" />
                 </button>
 
@@ -1392,7 +1394,7 @@ export default function Booking() {
                   className="text-xs text-text-muted text-center hover:text-black transition-colors"
                   style={{ fontWeight: 400 }}
                 >
-                  No, seguir eligiendo servicios
+                  {t.booking.upsell.skipBtn}
                 </button>
               </motion.div>
             </motion.div>
@@ -1436,10 +1438,12 @@ export default function Booking() {
                   </div>
                   <div className="flex flex-col gap-0 min-w-0">
                     <span className="text-sm text-black leading-tight" style={{ fontWeight: 700 }}>
-                      {carrito.length} {carrito.length === 1 ? 'servicio' : 'servicios'} seleccionados
+                      {carrito.length === 1
+                        ? t.booking.upsell.selectedSingular.replace('{n}', String(carrito.length))
+                        : t.booking.upsell.selectedPlural.replace('{n}', String(carrito.length))}
                     </span>
                     <span className="text-xs text-text-muted" style={{ fontFamily: '"Space Mono", monospace' }}>
-                      {formatDuracion(duracionTotal)} · {precioTotal > 0 ? `${precioTotal}€` : 'A consultar'}
+                      {formatDuracion(duracionTotal)} · {precioTotal > 0 ? `${precioTotal}€` : t.booking.toConsult}
                     </span>
                   </div>
                 </button>
@@ -1457,7 +1461,7 @@ export default function Booking() {
                   style={{ fontWeight: 700, background: 'var(--color-brand)', borderRadius: '12px' }}
                   aria-label="Elegir fecha y hora"
                 >
-                  Elegir fecha
+                  {t.booking.cart.chooseDate}
                   <ArrowRight size={14} aria-hidden="true" />
                 </button>
               </div>
@@ -1500,7 +1504,7 @@ export default function Booking() {
                 <div className="flex items-center justify-between px-5 pb-4 shrink-0">
                   <div className="flex items-center gap-2">
                     <ShoppingCart size={18} aria-hidden="true" />
-                    <h3 className="text-base text-black" style={{ fontWeight: 700 }}>Tu cita</h3>
+                    <h3 className="text-base text-black" style={{ fontWeight: 700 }}>{t.booking.cart.title}</h3>
                     <span
                       className="w-5 h-5 rounded-full flex items-center justify-center text-xs text-white"
                       style={{ background: 'var(--color-pomegranate)', fontWeight: 700 }}
@@ -1552,15 +1556,15 @@ export default function Booking() {
                   style={{ borderTop: '1px solid var(--color-accent)' }}
                 >
                   <div className="flex justify-between text-sm">
-                    <span className="text-text-muted" style={{ fontWeight: 400 }}>Duración total</span>
+                    <span className="text-text-muted" style={{ fontWeight: 400 }}>{t.booking.totalDuration}</span>
                     <span className="text-black" style={{ fontWeight: 700, fontFamily: '"Space Mono", monospace' }}>
                       {formatDuracion(duracionTotal)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-text-muted" style={{ fontWeight: 400 }}>Total</span>
+                    <span className="text-text-muted" style={{ fontWeight: 400 }}>{t.booking.total}</span>
                     <span className="text-black" style={{ fontWeight: 800 }}>
-                      {precioTotal > 0 ? `${precioTotal}€` : 'A consultar'}
+                      {precioTotal > 0 ? `${precioTotal}€` : t.booking.toConsult}
                     </span>
                   </div>
                   <button
@@ -1576,7 +1580,7 @@ export default function Booking() {
                     }}
                     className="btn-primary w-full flex items-center justify-center gap-2 mt-1"
                   >
-                    Elegir fecha y hora
+                    {t.booking.cart.chooseDate}
                     <ArrowRight size={15} aria-hidden="true" />
                   </button>
                 </div>

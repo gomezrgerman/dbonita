@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCookieConsent } from '@/lib/cookie-consent'
+import { useLang } from '@/lib/i18n'
 
 export default function CookieBanner() {
   const { accept: acceptConsent, reject: rejectConsent } = useCookieConsent()
+  const { t } = useLang()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -45,11 +47,9 @@ export default function CookieBanner() {
             }}
           >
             <p className="text-xs text-text-muted leading-relaxed flex-1" style={{ fontWeight: 400 }}>
-              Usamos cookies técnicas necesarias para el proceso de reserva y pago.
-              Si aceptas, también cargamos el mapa de Google Maps y la animación del hero,
-              que pueden establecer cookies propias.{' '}
+              {t.cookieBanner.body}{' '}
               <a href="/privacidad" className="text-black underline underline-offset-2" style={{ fontWeight: 600 }}>
-                Más información
+                {t.cookieBanner.moreInfo}
               </a>
             </p>
             <div className="flex items-center gap-2 shrink-0">
@@ -58,7 +58,7 @@ export default function CookieBanner() {
                 className="px-4 py-2 text-xs text-text-muted border border-accent rounded-xl transition-colors hover:border-black hover:text-black"
                 style={{ fontWeight: 500 }}
               >
-                Rechazar
+                {t.cookieBanner.reject}
               </button>
               <button
                 onClick={handleAccept}
@@ -75,7 +75,7 @@ export default function CookieBanner() {
                   e.currentTarget.style.background = '#000'
                 }}
               >
-                Aceptar
+                {t.cookieBanner.accept}
               </button>
             </div>
           </div>
