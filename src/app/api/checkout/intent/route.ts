@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { NUM_PERSONAL } from '@/lib/constants'
 
 function timeToMin(t: string): number {
@@ -12,6 +12,7 @@ interface ReservaRow { hora: string; duracion_minutos: number | null }
 interface BloqueoRow { hora_inicio: string; hora_fin: string; afecta: string | null }
 
 async function slotDisponible(fecha: string, hora: string, duracionMinutos: number): Promise<boolean> {
+  const supabase = getSupabaseAdmin()
   const [reservasResult, bloqueosResult] = await Promise.all([
     supabase
       .from('reservas')

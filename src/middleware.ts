@@ -53,6 +53,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Rutas de panel API que requieren autenticación
+  if (pathname.startsWith('/api/panel/') &&
+      !pathname.startsWith('/api/panel/auth') &&
+      !pathname.startsWith('/api/panel/logout')) {
+    const authenticated = await verifyPanelCookie(request)
+    if (!authenticated) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    return NextResponse.next()
+  }
+
   // Las rutas API nunca se bloquean por SITE_ENABLED
   if (pathname.startsWith('/api/')) return NextResponse.next()
 

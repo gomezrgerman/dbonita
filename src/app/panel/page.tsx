@@ -11,7 +11,7 @@ import { NUM_PERSONAL } from '@/lib/constants'
 import {
   getBookingsAsync, updateBookingEstadoAsync, createBookingAsync,
   getClientesAsync, getHistorialClienteAsync,
-  getSlotsBloqueadosAsync, crearBloqueoAsync, eliminarBloqueoAsync,
+  getSlotsBloqueadosAsync,
 } from '@/lib/supabase-store'
 import { SERVICIOS } from '@/lib/constants'
 import type { Booking, Cliente, SlotBloqueado, EstadoCita } from '@/lib/types'
@@ -614,12 +614,16 @@ function VistaBloqueos() {
     e.preventDefault()
     setGuardando(true)
     try {
-      await crearBloqueoAsync({
-        fecha: form.fecha,
-        horaInicio: form.todoDia ? 'todo-el-dia' : form.horaInicio,
-        horaFin: form.todoDia ? 'todo-el-dia' : form.horaFin,
-        motivo: form.motivo,
-        afecta: form.todoDia ? form.afecta : undefined,
+      await fetch('/api/panel/bloqueos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fecha: form.fecha,
+          horaInicio: form.todoDia ? 'todo-el-dia' : form.horaInicio,
+          horaFin: form.todoDia ? 'todo-el-dia' : form.horaFin,
+          motivo: form.motivo,
+          afecta: form.todoDia ? form.afecta : undefined,
+        }),
       })
       await cargar()
       setForm({ fecha: '', horaInicio: '', horaFin: '', motivo: '', todoDia: false, afecta: 'negocio' })
@@ -629,7 +633,11 @@ function VistaBloqueos() {
   }
 
   const eliminar = async (id: string) => {
-    await eliminarBloqueoAsync(id)
+    await fetch('/api/panel/bloqueos', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
     await cargar()
   }
 

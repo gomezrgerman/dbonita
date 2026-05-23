@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { createBookingAsync } from '@/lib/supabase-store'
 
 export async function POST(req: Request) {
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     const pi = event.data.object as Stripe.PaymentIntent
 
     // Idempotencia: si ya existe una reserva con este paymentIntentId, no crear otra
-    const { data: existing } = await supabase
+    const { data: existing } = await getSupabaseAdmin()
       .from('reservas')
       .select('id')
       .eq('stripe_payment_intent_id', pi.id)
