@@ -3,12 +3,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
-import { TESTIMONIOS } from '@/lib/constants'
 import { useLang } from '@/lib/i18n'
 
 function Estrellas({ cantidad }: { cantidad: number }) {
   return (
-    <div className="flex gap-1" aria-label={`${cantidad} estrellas de 5`}>
+    <div className="flex gap-1" aria-label={`${cantidad} / 5`}>
       {Array.from({ length: cantidad }).map((_, i) => (
         <Star key={i} size={14} className="fill-lemon text-lemon" aria-hidden="true" />
       ))}
@@ -18,8 +17,9 @@ function Estrellas({ cantidad }: { cantidad: number }) {
 
 export default function Testimonials() {
   const { t } = useLang()
+  const testimonios = t.testimonials.items
   const [actual, setActual] = useState(0)
-  const total = TESTIMONIOS.length
+  const total = testimonios.length
 
   const anterior  = () => setActual((p) => (p === 0 ? total - 1 : p - 1))
   const siguiente = () => setActual((p) => (p === total - 1 ? 0 : p + 1))
@@ -67,16 +67,16 @@ export default function Testimonials() {
                   className="w-full"
                 >
                   <blockquote className="flex flex-col gap-5">
-                    <Estrellas cantidad={TESTIMONIOS[actual].estrellas} />
+                    <Estrellas cantidad={testimonios[actual].estrellas} />
                     <p className="font-sans leading-relaxed text-black" style={{ fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)', fontWeight: 400 }}>
-                      &ldquo;{TESTIMONIOS[actual].resena}&rdquo;
+                      &ldquo;{testimonios[actual].resena}&rdquo;
                     </p>
                     <footer className="flex flex-col gap-0.5">
                       <cite className="font-sans text-sm font-600 not-italic text-black" style={{ fontWeight: 600 }}>
-                        {TESTIMONIOS[actual].nombre}
+                        {testimonios[actual].nombre}
                       </cite>
                       <span className="label-upper text-text-muted">
-                        {TESTIMONIOS[actual].ciudad} · {TESTIMONIOS[actual].tratamiento}
+                        {testimonios[actual].ciudad} · {testimonios[actual].tratamiento}
                       </span>
                     </footer>
                   </blockquote>
@@ -108,7 +108,7 @@ export default function Testimonials() {
               </button>
 
               <div className="flex gap-2 ml-2" role="tablist">
-                {TESTIMONIOS.map((_, i) => (
+                {testimonios.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setActual(i)}
@@ -124,7 +124,7 @@ export default function Testimonials() {
 
           {/* Mini panel lateral */}
           <div className="lg:col-span-4 hidden lg:flex flex-col gap-3">
-            {TESTIMONIOS.map((t, i) => (
+            {testimonios.map((t, i) => (
               <button
                 key={t.id}
                 onClick={() => setActual(i)}

@@ -145,7 +145,7 @@ export default function Footer() {
               className="text-xs text-center leading-relaxed"
               style={{ color: 'rgba(249,188,26,0.38)', fontWeight: 300, fontStyle: 'italic', letterSpacing: '0.015em' }}
             >
-              Internet ya tenía suficientes webs feas.
+              {t.footer.devCredit}
             </p>
             <a
               href="https://german-gomez.es"
