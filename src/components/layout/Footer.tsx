@@ -7,8 +7,8 @@ import { useLang } from '@/lib/i18n'
 
 export default function Footer() {
   const { t } = useLang()
-  const instagramUrl  = process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://instagram.com/dbonita'
-  const whatsappNum   = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'
+  const instagramUrl  = process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://www.instagram.com/dbonitadenia/'
+  const whatsappNum   = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34657332722'
 
   const goTo = (href: string) => {
     document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' })

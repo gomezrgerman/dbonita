@@ -9,9 +9,9 @@ export default function Contact() {
   const { t } = useLang()
   const { consent, accept } = useCookieConsent()
   const instagramUrl =
-    process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://instagram.com/dbonita'
+    process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://www.instagram.com/dbonitadenia/'
   const whatsappNumber =
-    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34657332722'
 
   const infoContacto = [
     {

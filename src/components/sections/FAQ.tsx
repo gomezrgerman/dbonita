@@ -103,7 +103,7 @@ export default function FAQ() {
             {t.faq.ctaText}
           </p>
           <a
-            href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'}?text=${encodeURIComponent(t.faq.ctaWaMsg)}`}
+            href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34657332722'}?text=${encodeURIComponent(t.faq.ctaWaMsg)}`}
             target="_blank" rel="noopener noreferrer"
             className="btn-primary whitespace-nowrap"
             aria-label={t.faq.ctaBtn}

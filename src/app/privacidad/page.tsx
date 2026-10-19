@@ -28,7 +28,7 @@ export default function PrivacidadPage() {
               <strong>Titular:</strong> Diana Alexandra Pulgarin Morales<br />
               <strong>NIF:</strong> 54738932J<br />
               <strong>Dirección:</strong> Carrer del Cop, 5, Piso 1 Puerta 2, 03700 Dénia, Alicante, España<br />
-              <strong>Email:</strong> {process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'info@dbonita.es'}<br />
+              <strong>Email:</strong> {process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'hola@dbonita.es'}<br />
               <strong>Teléfono:</strong> {process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ? `+${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}` : '+34 600 000 000'}
             </p>
           </section>
@@ -85,7 +85,7 @@ export default function PrivacidadPage() {
             </ul>
             <p className="mt-3">
               Para ejercer estos derechos, envía un email a{' '}
-              <strong>{process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'info@dbonita.es'}</strong>{' '}
+              <strong>{process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'hola@dbonita.es'}</strong>{' '}
               indicando el derecho que deseas ejercer y una copia de tu DNI. Respondemos en un plazo máximo de 30 días.
             </p>
             <p className="mt-2">

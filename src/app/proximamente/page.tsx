@@ -7,8 +7,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://instagram.com/dbonita'
-const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'
+const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://www.instagram.com/dbonitadenia/'
+const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34657332722'
 
 export default function Proximamente() {
   return (
