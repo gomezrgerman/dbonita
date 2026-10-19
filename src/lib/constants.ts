@@ -561,18 +561,24 @@ export interface GaleriaItem {
 }
 
 export const GALERIA_ITEMS: GaleriaItem[] = [
-  { id: 'g1',  src: '/img/nail-art-flores.png',   alt: 'Nail art con diseño floral sobre uñas nude, exterior',      tratamiento: 'Nail Art' },
-  { id: 'g2',  src: '/img/manicura-nude.png',      alt: 'Manicura semipermanente en tono nude natural',              tratamiento: 'Manicura Semipermanente' },
-  { id: 'g3',  src: '/img/nail-art-rojo.png',      alt: 'Nail art en rojo con rayas, sosteniendo un café',           tratamiento: 'Nail Art' },
-  { id: 'g4',  src: '/img/lifting-pestanas.png',   alt: 'Resultado de lifting de pestañas, vista closeup',           tratamiento: 'Lifting de Pestañas' },
-  { id: 'g5',  src: '/img/nail-art-cherry.png',    alt: 'Cherry Nails — diseños en rojo cereza',                     tratamiento: 'Nail Art' },
-  { id: 'g6',  src: '/img/nail-art-cocoa.png',     alt: 'Cocoa Nails — diseños en tonos chocolate',                  tratamiento: 'Nail Art' },
-  { id: 'g7',  src: '/img/nail-art-aura.png',      alt: 'Aura Nails — degradado azul y morado',                      tratamiento: 'Nail Art' },
-  { id: 'g8',  src: '/img/nail-art-french.png',    alt: 'French Nails — francesa clásica y variantes',               tratamiento: 'Manicura Semipermanente' },
-  { id: 'g9',  src: '/img/semi-refuerzo.png',      alt: 'Semipermanente con refuerzo y decoración a mano alzada',    tratamiento: 'Manicura Semipermanente' },
-  { id: 'g10', src: '/img/dual-system.png',        alt: 'Dual System — francesa y cat eye con decoración',           tratamiento: 'Extensión de Uñas' },
-  { id: 'g11', src: '/img/extension-natural.png',  alt: 'Extensión de uñas acabado natural',                         tratamiento: 'Extensión de Uñas' },
-  { id: 'g12', src: '/img/manicura-oscura.png',    alt: 'Manicura semipermanente en tono chocolate oscuro',          tratamiento: 'Manicura Semipermanente' },
+  { id: 'g1',  src: '/img/nail-art-flores.webp',   alt: 'Nail art con diseño floral sobre uñas nude, exterior',      tratamiento: 'Nail Art' },
+  { id: 'g2',  src: '/img/manicura-nude.webp',      alt: 'Manicura semipermanente en tono nude natural',              tratamiento: 'Manicura Semipermanente' },
+  { id: 'g3',  src: '/img/nail-art-rojo.webp',      alt: 'Nail art en rojo con rayas, sosteniendo un café',           tratamiento: 'Nail Art' },
+  { id: 'g4',  src: '/img/lifting-pestanas.webp',   alt: 'Resultado de lifting de pestañas, vista closeup',           tratamiento: 'Lifting de Pestañas' },
+  { id: 'g5',  src: '/img/nail-art-cherry.webp',    alt: 'Cherry Nails — diseños en rojo cereza',                     tratamiento: 'Nail Art' },
+  { id: 'g6',  src: '/img/nail-art-cocoa.webp',     alt: 'Cocoa Nails — diseños en tonos chocolate',                  tratamiento: 'Nail Art' },
+  { id: 'g7',  src: '/img/nail-art-aura.webp',      alt: 'Aura Nails — degradado azul y morado',                      tratamiento: 'Nail Art' },
+  { id: 'g8',  src: '/img/nail-art-french.webp',    alt: 'French Nails — francesa clásica y variantes',               tratamiento: 'Manicura Semipermanente' },
+  { id: 'g9',  src: '/img/semi-refuerzo.webp',      alt: 'Semipermanente con refuerzo y decoración a mano alzada',    tratamiento: 'Manicura Semipermanente' },
+  { id: 'g10', src: '/img/dual-system.webp',        alt: 'Dual System — francesa y cat eye con decoración',           tratamiento: 'Extensión de Uñas' },
+  { id: 'g11', src: '/img/extension-natural.webp',  alt: 'Extensión de uñas acabado natural',                         tratamiento: 'Extensión de Uñas' },
+  { id: 'g12', src: '/img/manicura-oscura.webp',    alt: 'Manicura semipermanente en tono chocolate oscuro',          tratamiento: 'Manicura Semipermanente' },
+  { id: 'g13', src: '/img/nail-art-verde.webp',     alt: 'Nail art en verde oscuro con francesa y diseños a mano',     tratamiento: 'Nail Art' },
+  { id: 'g14', src: '/img/lifting-pestanas-2.webp', alt: 'Resultado de lifting de pestañas en clienta, vista lateral', tratamiento: 'Lifting de Pestañas' },
+  { id: 'g15', src: '/img/manicura-nude-anillos.webp', alt: 'Manicura semipermanente nude con anillos dorados',       tratamiento: 'Manicura Semipermanente' },
+  { id: 'g16', src: '/img/nail-art-personaje.webp', alt: 'Uñas rojas con nail art de personaje dibujado a mano',       tratamiento: 'Nail Art' },
+  { id: 'g17', src: '/img/manicura-verde-agua.webp', alt: 'Manicura semipermanente verde menta junto a la piscina',   tratamiento: 'Manicura Semipermanente' },
+  { id: 'g18', src: '/img/manicura-rosa.webp',      alt: 'Manicura semipermanente rosa con fondo de árboles frutales', tratamiento: 'Manicura Semipermanente' },
 ]
 
 // ============================================================
@@ -700,7 +706,7 @@ export const TRATAMIENTOS_DESTACADOS: TratamientoDestacado[] = [
     precio: '25€',
     color: '#fc7981',
     bg: '#fff0f1',
-    imagen: '/img/manicura-nude.png',
+    imagen: '/img/manicura-nude.webp',
   },
   {
     id: 'td-2',
@@ -711,7 +717,7 @@ export const TRATAMIENTOS_DESTACADOS: TratamientoDestacado[] = [
     precio: '45€',
     color: '#43089f',
     bg: '#f5f0ff',
-    imagen: '/img/lifting-pestanas.png',
+    imagen: '/img/lifting-pestanas-real.webp',
   },
   {
     id: 'td-3',
@@ -722,7 +728,7 @@ export const TRATAMIENTOS_DESTACADOS: TratamientoDestacado[] = [
     precio: '40€',
     color: '#078a52',
     bg: '#f0fdf4',
-    imagen: '/img/nail-art-french.png',
+    imagen: '/img/laminado-cejas.webp',
   },
   {
     id: 'td-4',
@@ -733,7 +739,7 @@ export const TRATAMIENTOS_DESTACADOS: TratamientoDestacado[] = [
     precio: '59€',
     color: '#d08a11',
     bg: '#fffbeb',
-    imagen: '/img/nail-art-aura.png',
+    imagen: '/img/facial-piel.webp',
   },
 ]
 

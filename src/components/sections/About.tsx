@@ -27,7 +27,7 @@ export default function About() {
           >
             <div className="overflow-hidden aspect-[4/5] rounded-feature shadow-clay">
               <Image
-                src="/img/diana-manicurista.png"
+                src="/img/diana-manicurista.webp"
                 alt="Diana — manicurista y fundadora de D Bonita en Dénia"
                 fill
                 className="object-cover object-top"
