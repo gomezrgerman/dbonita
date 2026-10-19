@@ -9,10 +9,8 @@ import {
 } from 'lucide-react'
 import { NUM_PERSONAL } from '@/lib/constants'
 import {
-  getBookingsAsync, updateBookingEstadoAsync, createBookingAsync,
-  getClientesAsync, getHistorialClienteAsync,
-  getSlotsBloqueadosAsync,
-} from '@/lib/supabase-store'
+  getBookings, actualizarEstado, crearCita, getBloqueos, derivarClientes,
+} from '@/lib/panel-api'
 import { SERVICIOS } from '@/lib/constants'
 import type { Booking, Cliente, SlotBloqueado, EstadoCita } from '@/lib/types'
 
@@ -128,27 +126,17 @@ function ModalNuevaCita({ fechaInicial, onGuardar, onCerrar }: ModalNuevaCitaPro
     pagado: false, importePagado: 0,
   })
   const [guardando, setGuardando] = useState(false)
-
-  const servicioSel = SERVICIOS.find((s) => s.id === form.servicioId) ?? SERVICIOS[0]
+  const [errorGuardar, setErrorGuardar] = useState<string | null>(null)
 
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault()
     setGuardando(true)
+    setErrorGuardar(null)
     try {
-      await createBookingAsync({
-        clienteNombre: form.nombre,
-        clienteEmail: form.email,
-        clienteTelefono: form.telefono,
-        servicios: [servicioSel.id],
-        duracionMinutos: servicioSel.duracionMinutos,
-        fecha: form.fecha,
-        hora: form.hora,
-        notas: form.notas,
-        pagado: form.pagado,
-        importePagado: form.pagado ? form.importePagado : 0,
-        estado: 'pendiente',
-      })
+      await crearCita(form)
       onGuardar()
+    } catch (err) {
+      setErrorGuardar(err instanceof Error ? err.message : 'No se pudo guardar la cita')
     } finally {
       setGuardando(false)
     }
@@ -252,6 +240,10 @@ function ModalNuevaCita({ fechaInicial, onGuardar, onCerrar }: ModalNuevaCitaPro
             )}
           </div>
 
+          {errorGuardar && (
+            <p className="font-sans text-xs font-light text-red-600" role="alert">{errorGuardar}</p>
+          )}
+
           <div className="flex gap-3 pt-2">
             <button type="submit" disabled={guardando || !form.nombre}
               className="flex-1 py-3 bg-primary text-white font-sans text-sm font-light tracking-widest uppercase hover:bg-primary-dark transition-colors disabled:bg-accent disabled:text-text-muted">
@@ -280,7 +272,7 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
   const [confirmCancel, setConfirmCancel] = useState<Booking | null>(null)
 
   const cargar = useCallback(async () => {
-    setBookings(await getBookingsAsync())
+    setBookings(await getBookings())
   }, [])
 
   useEffect(() => { cargar() }, [cargar])
@@ -304,7 +296,11 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
 
   const cambiarEstado = async (id: string, estado: EstadoCita) => {
     setActualizando(id)
-    await updateBookingEstadoAsync(id, estado)
+    try {
+      await actualizarEstado(id, estado)
+    } catch (err) {
+      console.error('cambiarEstado:', err)
+    }
     await cargar()
     onRefresh()
     setTimeout(() => setActualizando(null), 400)
@@ -497,12 +493,15 @@ function VistaClientes() {
   const [historial, setHistorial] = useState<Booking[]>([])
   const [busqueda, setBusqueda] = useState('')
 
-  useEffect(() => { getClientesAsync().then(setClientes) }, [])
+  const [bookings, setBookings] = useState<Booking[]>([])
 
-  const seleccionarCliente = async (c: Cliente) => {
+  useEffect(() => {
+    getBookings().then((b) => { setBookings(b); setClientes(derivarClientes(b)) })
+  }, [])
+
+  const seleccionarCliente = (c: Cliente) => {
     setClienteActivo(c)
-    const h = await getHistorialClienteAsync(c.email)
-    setHistorial(h)
+    setHistorial(bookings.filter((b) => b.clienteEmail === c.email))
   }
 
   const clientesFiltrados = clientes.filter(
@@ -606,7 +605,7 @@ function VistaBloqueos() {
   const [guardando, setGuardando] = useState(false)
 
   const cargar = useCallback(async () => {
-    setBloqueos(await getSlotsBloqueadosAsync())
+    setBloqueos(await getBloqueos())
   }, [])
   useEffect(() => { cargar() }, [cargar])
 
@@ -799,7 +798,10 @@ function VistaEstadisticas() {
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
-    getBookingsAsync().then((b) => { setBookings(b); setCargando(false) })
+    getBookings()
+      .then(setBookings)
+      .catch((err) => console.error('estadisticas:', err))
+      .finally(() => setCargando(false))
   }, [])
 
   if (cargando) {

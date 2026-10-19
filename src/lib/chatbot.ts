@@ -247,4 +247,4 @@ export const INITIAL_MESSAGE: ChatResponse = {
   quickReplies: ['¿Qué servicios ofrecéis?', '¿Cuáles son los precios?', 'Recomiéndame un tratamiento', '¿Cómo reservo cita?'],
 }
 
-export const WHATSAPP_URL = process.env.NEXT_PUBLIC_WHATSAPP_URL ?? `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'}`
+export const WHATSAPP_URL = process.env.NEXT_PUBLIC_WHATSAPP_URL ?? `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34657332722'}`

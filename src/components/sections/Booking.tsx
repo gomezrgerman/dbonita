@@ -14,18 +14,12 @@ import {
 } from '@/lib/constants'
 import { useLang } from '@/lib/i18n'
 import { NUM_PERSONAL } from '@/lib/constants'
-import { createBookingAsync, getHorasOcupadasByFechaAsync, getSlotsBloqueadosAsync } from '@/lib/supabase-store'
-import { enviarConfirmacion, enviarNotificacionNegocio } from '@/lib/email'
-import type { Booking as BookingType } from '@/lib/types'
+import { HORARIO, DIAS_CERRADO, timeToMin } from '@/lib/reservas-reglas'
+import type { ReservaPublica } from '@/lib/types'
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : null
-
-const HORARIO = [
-  { apertura: 10 * 60, cierre: 19 * 60 },
-]
-const DIAS_CERRADO = [0, 6]
 
 function toFechaStr(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -43,11 +37,6 @@ function generarSlots(duracionMin: number): string[] {
     }
   }
   return slots
-}
-
-function timeToMin(t: string): number {
-  const [h, m] = t.split(':').map(Number)
-  return h * 60 + m
 }
 
 function getDiasDelMes(year: number, month: number): (number | null)[] {
@@ -139,18 +128,38 @@ function StepIndicator({ paso, steps }: { paso: Paso; steps: string[] }) {
 
 // ─── PagoForm — debe estar dentro de <Elements> para usar useStripe/useElements ──
 
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34657332722'
+
+/**
+ * Pide al servidor que registre la reserva del pago. Si Stripe aun esta procesando
+ * el cobro (202), reintenta unos segundos antes de rendirse.
+ */
+async function confirmarEnServidor(clientSecret: string): Promise<ReservaPublica> {
+  for (let intento = 0; intento < 6; intento++) {
+    const res = await fetch('/api/reserva/confirmar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientSecret }),
+    })
+    if (res.status === 202) {
+      await new Promise((r) => setTimeout(r, 2000))
+      continue
+    }
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok || !data.reserva) throw new Error(data.error ?? 'No se pudo guardar la reserva')
+    return data.reserva as ReservaPublica
+  }
+  throw new Error('El pago sigue en proceso')
+}
+
 interface PagoFormProps {
   form: FormData
-  carrito: string[]
-  fechaStr: string
-  horaSeleccionada: string
-  duracionTotal: number
   clientSecret: string
-  onExito: (booking: BookingType) => void
+  onExito: (reserva: ReservaPublica) => void
   tPayment: { paying: string; payBtn: string; errorPayment: string; errorSave: string }
 }
 
-function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, clientSecret, onExito, tPayment }: PagoFormProps) {
+function PagoForm({ form, clientSecret, onExito, tPayment }: PagoFormProps) {
   const stripe = useStripe()
   const elements = useElements()
   const [pagando, setPagando] = useState(false)
@@ -166,7 +175,8 @@ function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, cl
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: typeof window !== 'undefined' ? window.location.origin : '',
+        // Para metodos con redireccion (p. ej. Bizum): al volver, Booking lee los parametros de la URL
+        return_url: typeof window !== 'undefined' ? `${window.location.origin}/?reserva=pago` : '',
         payment_method_data: {
           billing_details: {
             name: form.nombre,
@@ -184,27 +194,10 @@ function PagoForm({ form, carrito, fechaStr, horaSeleccionada, duracionTotal, cl
       return
     }
 
-    // Extraemos el paymentIntentId del clientSecret (formato: pi_xxx_secret_xxx)
-    const paymentIntentId = clientSecret.split('_secret_')[0]
-
-    // Pago confirmado — crear reserva en Supabase (vía rápida para el usuario)
-    // El webhook de Stripe actúa como red de seguridad si esto falla
+    // Pago confirmado: el servidor crea la reserva (el webhook de Stripe hace lo mismo
+    // como red de seguridad; solo se guarda una) y envia los emails
     try {
-      const booking = await createBookingAsync({
-        clienteNombre: form.nombre,
-        clienteEmail: form.email,
-        clienteTelefono: form.telefono,
-        servicios: carrito,
-        duracionMinutos: duracionTotal,
-        fecha: fechaStr,
-        hora: horaSeleccionada,
-        notas: form.notas,
-        importePagado: 10,
-        pagado: true,
-        estado: 'confirmada',
-        stripePaymentIntentId: paymentIntentId,
-      })
-      onExito(booking)
+      onExito(await confirmarEnServidor(clientSecret))
     } catch {
       setErrorPago(tPayment.errorSave)
       setPagando(false)
@@ -270,7 +263,8 @@ export default function Booking() {
   const [horaSeleccionada, setHoraSeleccionada] = useState<string | null>(null)
   const [form, setForm] = useState<FormData>({ nombre: '', telefono: '', email: '', notas: '' })
   const [enviando, setEnviando] = useState(false)
-  const [reservaGuardada, setReservaGuardada] = useState<BookingType | null>(null)
+  const [reservaGuardada, setReservaGuardada] = useState<ReservaPublica | null>(null)
+  const [avisoPago, setAvisoPago] = useState<string | null>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [horasOcupadas, setHorasOcupadas] = useState<Array<{ inicio: number; fin: number }>>([])
   const [diaCompletoSupa, setDiaCompletoSupa] = useState(false)
@@ -339,30 +333,57 @@ export default function Booking() {
   const monthName = cal.months[mes]
 
   useEffect(() => {
-    getSlotsBloqueadosAsync().then((bloqueos) => {
-      const fechaInicio = toFechaStr(año, mes, 1)
-      const ultimoDia = new Date(año, mes + 1, 0).getDate()
-      const fechaFin = toFechaStr(año, mes, ultimoDia)
-      const cerrados = new Set(
-        bloqueos
-          .filter((b) => b.fecha >= fechaInicio && b.fecha <= fechaFin)
-          .filter((b) => b.horaInicio === 'todo-el-dia' && (b.afecta === 'negocio' || !b.afecta))
-          .map((b) => b.fecha)
-      )
-      setDiasBloqueadosMes(cerrados)
-    })
+    const desde = toFechaStr(año, mes, 1)
+    const hasta = toFechaStr(año, mes, new Date(año, mes + 1, 0).getDate())
+    fetch(`/api/disponibilidad?desde=${desde}&hasta=${hasta}`)
+      .then((res) => (res.ok ? res.json() : { diasCerrados: [] }))
+      .then((data: { diasCerrados: string[] }) => setDiasBloqueadosMes(new Set(data.diasCerrados)))
+      .catch(() => setDiasBloqueadosMes(new Set()))
   }, [mes, año])
 
   useEffect(() => {
     if (!fechaStr) { setHorasOcupadas([]); setDiaCompletoSupa(false); return }
     setCargandoSlots(true)
-    getHorasOcupadasByFechaAsync(fechaStr)
-      .then(({ rangos, diaCompleto }) => {
+    fetch(`/api/disponibilidad?fecha=${fechaStr}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('disponibilidad')
+        return res.json()
+      })
+      .then(({ rangos, diaCompleto }: { rangos: Array<{ inicio: number; fin: number }>; diaCompleto: boolean }) => {
         setHorasOcupadas(rangos)
         setDiaCompletoSupa(diaCompleto)
       })
+      // Si no se puede consultar, no se ofrecen horas (el servidor tambien lo rechazaria)
+      .catch(() => { setHorasOcupadas([]); setDiaCompletoSupa(true) })
       .finally(() => setCargandoSlots(false))
   }, [fechaStr])
+
+  // Vuelta de un pago con redireccion: Stripe anade payment_intent_client_secret a la URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const secret = params.get('payment_intent_client_secret')
+    const estadoRedireccion = params.get('redirect_status')
+    if (!secret) return
+    window.history.replaceState(null, '', window.location.pathname + window.location.hash)
+
+    if (estadoRedireccion === 'failed') {
+      setAvisoPago(t.booking.form.errorPayment)
+      return
+    }
+    confirmarEnServidor(secret)
+      .then((reserva) => {
+        const [y, m, d] = reserva.fecha.split('-').map(Number)
+        setCarrito(reserva.servicios)
+        setAño(y); setMes(m - 1); setDiaSeleccionado(d)
+        setHoraSeleccionada(reserva.hora)
+        setForm((f) => ({ ...f, nombre: reserva.clienteNombre, email: reserva.clienteEmail }))
+        setReservaGuardada(reserva)
+        setPaso('confirmado')
+      })
+      .catch(() => setAvisoPago(t.booking.form.errorSave))
+    // Solo al montar: los parametros de Stripe aparecen una vez
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (paso === 'servicios') return
@@ -457,7 +478,12 @@ export default function Booking() {
           notas: form.notas,
         }),
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
+      if (res.status === 409) {
+        // Hueco ocupado mientras la clienta rellenaba el formulario
+        setError(data.error ?? t.booking.form.errorInit)
+        return
+      }
       if (!res.ok || !data.clientSecret) throw new Error(data.error ?? t.booking.form.errorInit)
       setClientSecret(data.clientSecret)
       setPaso('pago')
@@ -468,12 +494,8 @@ export default function Booking() {
     }
   }
 
-  const handlePagoExito = async (booking: BookingType) => {
-    setReservaGuardada(booking)
-    await Promise.allSettled([
-      enviarConfirmacion(booking),
-      enviarNotificacionNegocio(booking),
-    ])
+  const handlePagoExito = (reserva: ReservaPublica) => {
+    setReservaGuardada(reserva)
     setPaso('confirmado')
   }
 
@@ -510,6 +532,17 @@ export default function Booking() {
         </div>
 
         {paso !== 'confirmado' && <StepIndicator paso={paso} steps={t.booking.steps} />}
+
+        {avisoPago && paso !== 'confirmado' && (
+          <div
+            className="clay-card p-4 mb-6 flex items-start gap-3 max-w-2xl"
+            style={{ borderRadius: '12px', borderColor: 'var(--color-pomegranate)' }}
+            role="alert"
+          >
+            <AlertCircle size={16} className="shrink-0 mt-0.5" style={{ color: 'var(--color-pomegranate)' }} />
+            <p className="text-sm text-black" style={{ fontWeight: 400 }}>{avisoPago}</p>
+          </div>
+        )}
 
         {(paso === 'calendario' || paso === 'datos' || paso === 'pago') && (
           <button
@@ -1143,10 +1176,6 @@ export default function Booking() {
               >
                 <PagoForm
                   form={form}
-                  carrito={carrito}
-                  fechaStr={fechaStr}
-                  horaSeleccionada={horaSeleccionada!}
-                  duracionTotal={duracionTotal}
                   clientSecret={clientSecret}
                   onExito={handlePagoExito}
                   tPayment={{
@@ -1160,7 +1189,7 @@ export default function Booking() {
               <p className="text-xs text-text-muted text-center" style={{ fontWeight: 400 }}>
                 {t.booking.payment.helpText}{' '}
                 <a
-                  href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'}?text=${encodeURIComponent(t.booking.payment.helpWaMsg)}`}
+                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(t.booking.payment.helpWaMsg)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-black underline underline-offset-2"

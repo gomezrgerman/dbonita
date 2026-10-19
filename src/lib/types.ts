@@ -37,3 +37,17 @@ export interface SlotBloqueado {
   // 'trabajadora' → solo reduce capacidad en 1 (la otra sigue disponible)
   afecta?: 'negocio' | 'trabajadora'
 }
+
+// Datos de una reserva que se pueden mostrar a quien tiene el enlace
+// (confirmación tras el pago y página de cancelación).
+export interface ReservaPublica {
+  id: string
+  clienteNombre: string
+  clienteEmail: string
+  servicios: string[]
+  duracionMinutos: number
+  fecha: string
+  hora: string
+  estado: EstadoCita
+  importePagado: number
+}

@@ -1,92 +1,67 @@
 import { NextResponse } from 'next/server'
-import Stripe from 'stripe'
-import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { NUM_PERSONAL } from '@/lib/constants'
-
-function timeToMin(t: string): number {
-  const [h, m] = t.split(':').map(Number)
-  return h * 60 + m
-}
-
-interface ReservaRow { hora: string; duracion_minutos: number | null }
-interface BloqueoRow { hora_inicio: string; hora_fin: string; afecta: string | null }
-
-async function slotDisponible(fecha: string, hora: string, duracionMinutos: number): Promise<boolean> {
-  const supabase = getSupabaseAdmin()
-  const [reservasResult, bloqueosResult] = await Promise.all([
-    supabase
-      .from('reservas')
-      .select('hora, duracion_minutos')
-      .eq('fecha', fecha)
-      .neq('estado', 'cancelada'),
-    supabase
-      .from('bloqueos')
-      .select('hora_inicio, hora_fin, afecta')
-      .eq('fecha', fecha),
-  ])
-
-  if (reservasResult.error || bloqueosResult.error) return true // no bloquear ante error de BD
-
-  const inicio = timeToMin(hora)
-  const fin = inicio + duracionMinutos
-
-  const reservasOcupadas = (reservasResult.data as ReservaRow[]).filter((r) => {
-    const rInicio = timeToMin(r.hora)
-    const rFin = rInicio + (r.duracion_minutos ?? 60)
-    return inicio < rFin && fin > rInicio
-  }).length
-
-  const plazasBloqueadas = (bloqueosResult.data as BloqueoRow[]).reduce((acc, b) => {
-    const esPorTrabajadora = b.afecta === 'trabajadora'
-    const plazas = esPorTrabajadora ? 1 : NUM_PERSONAL
-    if (b.hora_inicio === 'todo-el-dia') return acc + plazas
-    const bInicio = timeToMin(b.hora_inicio)
-    const bFin = timeToMin(b.hora_fin)
-    return inicio < bFin && fin > bInicio ? acc + plazas : acc
-  }, 0)
-
-  return reservasOcupadas + plazasBloqueadas < NUM_PERSONAL
-}
+import { SERVICIOS } from '@/lib/constants'
+import { IMPORTE_SENAL_CENTIMOS, validarSolicitudReserva } from '@/lib/reservas-reglas'
+import { slotDisponibleAsync } from '@/lib/supabase-store'
+import { getStripe } from '@/lib/stripe-server'
 
 export async function POST(req: Request) {
-  const secretKey = process.env.STRIPE_SECRET_KEY
-  if (!secretKey) {
-    console.error('stripe intent: STRIPE_SECRET_KEY no configurada')
-    return NextResponse.json({ error: 'Stripe no configurado' }, { status: 500 })
+  let body: Record<string, unknown>
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Solicitud no válida' }, { status: 400 })
   }
 
-  try {
-    const {
-      nombre, email, telefono,
-      servicios, servicioDesc,
-      fecha, hora, duracionMinutos, notas,
-    } = await req.json()
+  const validacion = validarSolicitudReserva({
+    nombre: body.nombre,
+    email: body.email,
+    telefono: body.telefono,
+    servicios: body.servicios,
+    fecha: body.fecha,
+    hora: body.hora,
+    notas: body.notas,
+  })
+  if (!validacion.ok) {
+    return NextResponse.json({ error: validacion.error }, { status: 400 })
+  }
+  const d = validacion.datos
 
-    // Verificación de disponibilidad en servidor antes de crear el PaymentIntent
-    const disponible = await slotDisponible(fecha, hora, duracionMinutos ?? 60)
+  // Verificación de disponibilidad en servidor antes de cobrar.
+  // Si la BD falla no se cobra: mejor un error que una doble reserva.
+  try {
+    const disponible = await slotDisponibleAsync(d.fecha, d.hora, d.duracionMinutos)
     if (!disponible) {
       return NextResponse.json(
         { error: 'Este horario ya no está disponible. Por favor, elige otro.' },
         { status: 409 }
       )
     }
+  } catch (err) {
+    console.error('checkout intent: error comprobando disponibilidad:', err)
+    return NextResponse.json({ error: 'No se pudo comprobar la disponibilidad' }, { status: 503 })
+  }
 
-    const stripe = new Stripe(secretKey)
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: 1000,
+  try {
+    const servicioDesc = d.servicios
+      .map((id) => SERVICIOS.find((s) => s.id === id)?.nombre ?? id)
+      .join(' + ')
+
+    const paymentIntent = await getStripe().paymentIntents.create({
+      amount: IMPORTE_SENAL_CENTIMOS,
       currency: 'eur',
-      description: `Señal reserva D Bonita — ${servicioDesc}`,
-      receipt_email: email || undefined,
+      automatic_payment_methods: { enabled: true },
+      description: `Señal reserva D Bonita — ${servicioDesc}`.slice(0, 1000),
+      receipt_email: d.email,
       metadata: {
-        nombre: nombre ?? '',
-        email: email ?? '',
-        telefono: telefono ?? '',
-        servicios: JSON.stringify(servicios ?? []),
-        servicio_desc: servicioDesc ?? '',
-        fecha: fecha ?? '',
-        hora: hora ?? '',
-        duracion_minutos: String(duracionMinutos ?? 0),
-        notas: notas ?? '',
+        nombre: d.nombre,
+        email: d.email,
+        telefono: d.telefono,
+        servicios: JSON.stringify(d.servicios),
+        servicio_desc: servicioDesc.slice(0, 500),
+        fecha: d.fecha,
+        hora: d.hora,
+        duracion_minutos: String(d.duracionMinutos),
+        notas: d.notas,
       },
     })
 
