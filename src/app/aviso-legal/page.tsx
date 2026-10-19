@@ -28,7 +28,7 @@ export default function AvisoLegalPage() {
               <strong>Nombre:</strong> Diana Alexandra Pulgarin Morales<br />
               <strong>NIF:</strong> 54738932J<br />
               <strong>Domicilio:</strong> Carrer del Cop, 5, Piso 1 Puerta 2, 03700 Dénia, Alicante, España<br />
-              <strong>Email de contacto:</strong> {process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'info@dbonita.es'}<br />
+              <strong>Email de contacto:</strong> {process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'hola@dbonita.es'}<br />
               <strong>Actividad:</strong> Centro de estética — servicios de belleza y bienestar
             </p>
           </section>
@@ -36,7 +36,7 @@ export default function AvisoLegalPage() {
           <section>
             <h2 className="font-bold text-black text-base mb-3">2. Objeto y ámbito de aplicación</h2>
             <p>
-              El presente Aviso Legal regula el acceso y uso del sitio web <strong>dbonita.es</strong> (en adelante, "el Sitio"), cuya titularidad corresponde a Diana Alexandra Pulgarin Morales. El acceso al Sitio implica la aceptación plena y sin reservas de las condiciones aquí establecidas.
+              El presente Aviso Legal regula el acceso y uso del sitio web <strong>dbonita.es</strong> (en adelante, &ldquo;el Sitio&rdquo;), cuya titularidad corresponde a Diana Alexandra Pulgarin Morales. El acceso al Sitio implica la aceptación plena y sin reservas de las condiciones aquí establecidas.
             </p>
           </section>
 
