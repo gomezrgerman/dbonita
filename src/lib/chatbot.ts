@@ -30,7 +30,7 @@ const KNOWLEDGE: KnowledgeEntry[] = [
   },
   {
     keywords: ['manicura', 'uñas', 'unas', 'esmalte', 'semipermanente', 'dbonita', 'renaissance', 'extension'],
-    response: `Tenemos varios tipos de manicura:\n\n• **Manicura clásica** — 15€ (30 min)\n• **Manicura DBonita** ⭐ — 25€ (60 min) — Semipermanente con nivelación, nuestra favorita\n• **Manicura Renaissance** — 25€ (60 min)\n• **Manicura Renaissance Semi** — 35€ (90 min)\n• **Retirado + Manicura** — 10€ (40 min)\n• **Extensión con Soft Gel** — Desde 45€ (90 min)\n• **Extensión con Gel** — Desde 45€ (90 min)\n\nLa **Manicura DBonita** es la más pedida. ¿Te animas?`,
+    response: `Tenemos varios tipos de manicura:\n\n• **Manicura clásica** — 15€ (30 min)\n• **Manicura DBonita** ⭐ — 25€ (60 min) — Semipermanente con nivelación, nuestra favorita\n• **Manicura Renaissance** — 25€ (60 min)\n• **Manicura Renaissance Semi** — 35€ (90 min)\n• **Retirado de esmalte de otro centro** — 5€ (10 min)\n• **Extensión con Soft Gel** — Desde 45€ (90 min)\n• **Extensión con Gel** — Desde 45€ (90 min)\n\nLa **Manicura DBonita** es la más pedida. ¿Te animas?`,
     quickReplies: ['¿Qué es la Manicura DBonita?', '¿Cuánto duran las uñas semipermanentes?', 'Quiero reservar Manicura DBonita'],
   },
   {
@@ -50,12 +50,12 @@ const KNOWLEDGE: KnowledgeEntry[] = [
   },
   {
     keywords: ['pedicura', 'pie', 'pies'],
-    response: `Para los pies:\n\n• **Pedicura Renaissance** — 25€ (45 min)\n• **Pedicura Renaissance Semi** — 35€ (60 min)\n\nAmbas incluyen lima, cutículas y esmaltado. La versión Semi incluye esmalte semipermanente de larga duración.`,
+    response: `Para los pies:\n\n• **Pedicura Renaissance** (sin esmaltado) — 30€ (45 min)\n• **Pedicura Renaissance Semi** — 35€ (60 min)\n\nAmbas incluyen lima, cutículas y esmaltado. La versión Semi incluye esmalte semipermanente de larga duración.`,
     quickReplies: ['¿Cuánto cuesta la pedicura?', 'Quiero reservar pedicura'],
   },
   {
     keywords: ['corporal', 'corporales', 'madera', 'maderoterapia', 'drenaje', 'linfatico', 'masaje'],
-    response: `Tratamientos corporales:\n\n• **Maderoterapia** — Desde 55€ (90 min)\n  Masaje con instrumentos de madera para moldear y tonificar\n\n• **Drenaje Linfático** — Desde 45€ (90 min)\n  Masaje suave que reduce retención de líquidos y mejora la circulación`,
+    response: `Tratamientos corporales:\n\n• **Maderoterapia** — A consultar (90 min)\n  Masaje con instrumentos de madera para moldear y tonificar\n\n• **Drenaje Linfático** — A consultar (90 min)\n  Masaje suave que reduce retención de líquidos y mejora la circulación`,
     quickReplies: ['¿Qué es la maderoterapia?', 'Quiero reservar maderoterapia'],
   },
   {
@@ -75,12 +75,12 @@ const KNOWLEDGE: KnowledgeEntry[] = [
   },
   {
     keywords: ['horario', 'horarios', 'cuando', 'que dias', 'abri', 'abierto', 'atendeis', 'horario de apertura', 'apertura'],
-    response: `Nuestro horario es:\n\n📅 **Lunes a viernes**: 10:00 – 19:00\n📅 **Sábados y domingos**: Cerrado\n\nPuedes reservar tu cita directamente desde la web en cualquier momento.`,
+    response: `Nuestro horario es:\n\n📅 **Lunes, miércoles y jueves**: 10:00 – 19:00\n📅 **Martes y viernes**: 10:00 – 18:00\n📅 **Sábados y domingos**: Cerrado\n\nPuedes reservar tu cita directamente desde la web en cualquier momento.`,
     quickReplies: ['Quiero reservar cita', '¿Dónde estáis ubicados?'],
   },
   {
     keywords: ['cancelar', 'cancelacion', 'anular', 'devolucion', 'reembolso', 'señal', 'deposito', 'dinero'],
-    response: `Política de cancelación:\n\n✅ **Cancelación gratuita** hasta 24 horas antes de la cita\n❌ **Menos de 24h**: la señal de 10€ no es reembolsable\n\nPara cancelar, usa el enlace que recibes en tu email de confirmación.\n\nSi tienes un imprevisto, llámanos directamente.`,
+    response: `Política de cancelación:\n\n✅ **Cancelación gratuita** hasta 24 horas antes de la cita\n❌ **Menos de 24h**: la señal no es reembolsable\n\nPara cancelar, usa el enlace que recibes en tu email de confirmación.\n\nSi tienes un imprevisto, llámanos directamente.`,
     quickReplies: ['¿Cuánto es la señal?', 'Necesito cancelar mi cita', 'Quiero reservar'],
   },
   {
@@ -95,7 +95,7 @@ const KNOWLEDGE: KnowledgeEntry[] = [
   },
   {
     keywords: ['semipermanente', 'dura', 'cuanto tiempo dura', 'se mantiene', 'resiste'],
-    response: `El esmalte semipermanente dura entre **2 y 3 semanas** dependiendo del cuidado y del tipo de uña. Para prolongar su duración:\n\n• Aplica aceite de cutículas a diario\n• Protege las manos con guantes al limpiar\n• Evita usar las uñas como herramienta\n\nEl **Lifting de Pestañas** dura hasta **8 semanas**, y el **Laminado de Cejas** sobre **4-6 semanas**.`,
+    response: `El esmalte semipermanente dura entre **3 y 4 semanas** dependiendo del cuidado y del tipo de uña. Para prolongar su duración:\n\n• Aplica aceite de cutículas a diario\n• Protege las manos con guantes al limpiar\n• Evita usar las uñas como herramienta\n\nEl **Lifting de Pestañas** dura hasta **8 semanas**, y el **Laminado de Cejas** sobre **4-6 semanas**.`,
     quickReplies: ['Quiero reservar uñas semipermanentes', 'Cuidados después del lifting'],
   },
   {

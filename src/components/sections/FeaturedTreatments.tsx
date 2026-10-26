@@ -288,7 +288,7 @@ export default function FeaturedTreatments() {
 
       {/* Desktop: grid con hover */}
       <div className="hidden md:block max-w-7xl mx-auto px-6 lg:px-12 pb-12 md:pb-16">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {translatedItems.map((item) => (
             <TreatmentHoverCard key={item.id} item={item} bookLabel={t.featuredTreatments.book} />
           ))}

@@ -4,11 +4,26 @@ import { SERVICIOS } from './constants'
 // las usa tanto el calendario del navegador como las rutas API.
 
 export const ZONA_HORARIA = 'Europe/Madrid'
-export const HORARIO = [{ apertura: 10 * 60, cierre: 19 * 60 }]
-export const DIAS_CERRADO = [0, 6] // domingo, sábado
+export interface Tramo { apertura: number; cierre: number }
+
+const MANANA_A_19: Tramo[] = [{ apertura: 10 * 60, cierre: 19 * 60 }]
+const MANANA_A_18: Tramo[] = [{ apertura: 10 * 60, cierre: 18 * 60 }]
+
+// Índice = día de la semana (0 domingo … 6 sábado)
+export const HORARIO_SEMANAL: Tramo[][] = [
+  [],          // domingo
+  MANANA_A_19, // lunes
+  MANANA_A_18, // martes
+  MANANA_A_19, // miércoles
+  MANANA_A_19, // jueves
+  MANANA_A_18, // viernes
+  [],          // sábado
+]
+export const DIAS_CERRADO = HORARIO_SEMANAL.flatMap((tramos, dia) => (tramos.length === 0 ? [dia] : []))
 export const HORAS_MINIMAS_CANCELACION = 24
 export const DIAS_MAXIMOS_ANTELACION = 180
 export const IMPORTE_SENAL_CENTIMOS = 1000
+export const IMPORTE_SENAL_REDUCIDA_CENTIMOS = 500
 
 export function timeToMin(t: string): number {
   const [h, m] = t.split(':').map(Number)
@@ -65,6 +80,27 @@ export function calcularDuracion(servicios: string[]): number {
     (acc, id) => acc + (SERVICIOS.find((s) => s.id === id)?.duracionMinutos ?? 0),
     0
   )
+}
+
+/** Precio en euros de un servicio, o null si es "a consultar". "Desde 45€" cuenta como 45. */
+function precioEuros(precio: string): number | null {
+  const m = precio.match(/(\d+(?:[.,]\d+)?)\s*€/)
+  return m ? Number(m[1].replace(',', '.')) : null
+}
+
+/** Señal de 10 €, o de 5 € si el total de la reserva no llega a 10 €. */
+export function calcularSenalCentimos(servicios: string[]): number {
+  const precios = servicios.map((id) => {
+    const s = SERVICIOS.find((x) => x.id === id)
+    return s ? precioEuros(s.precio) : null
+  })
+  if (precios.some((p) => p === null)) return IMPORTE_SENAL_CENTIMOS
+  const total = (precios as number[]).reduce((a, b) => a + b, 0)
+  return total < IMPORTE_SENAL_CENTIMOS / 100 ? IMPORTE_SENAL_REDUCIDA_CENTIMOS : IMPORTE_SENAL_CENTIMOS
+}
+
+export function horarioDelDia(fecha: string): Tramo[] {
+  return HORARIO_SEMANAL[diaSemana(fecha)]
 }
 
 export function fechaValida(fecha: unknown): fecha is string {
@@ -151,7 +187,7 @@ export function validarSolicitudReserva(
 
   const duracionMinutos = calcularDuracion(idsServicios)
   const inicio = timeToMin(hora)
-  const dentroDeHorario = HORARIO.some(
+  const dentroDeHorario = horarioDelDia(fecha).some(
     ({ apertura, cierre }) => inicio >= apertura && inicio + duracionMinutos <= cierre
   )
   if (!dentroDeHorario) return fallo('La hora está fuera del horario.')

@@ -23,8 +23,8 @@ export default function Contact() {
     {
       icono: Mail,
       etiqueta: t.contact.labels.email,
-      valor: 'hola@dbonita.es',
-      href: 'mailto:hola@dbonita.es',
+      valor: 'dbonitadenia@gmail.com',
+      href: 'mailto:dbonitadenia@gmail.com',
     },
     {
       icono: MapPin,

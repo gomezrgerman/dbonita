@@ -1,7 +1,7 @@
 // Acceso a Supabase SOLO desde servidor (rutas API).
 // Usa la service role key: nunca importar este archivo desde un componente 'use client'.
 import { getSupabaseAdmin } from './supabase-admin'
-import { NUM_PERSONAL } from './constants'
+import { cabeEnHueco, tipoDeServicios, type RangoOcupado } from './reservas-capacidad'
 import { calcularDuracion, timeToMin } from './reservas-reglas'
 import type { Booking, EstadoCita, ReservaPublica, SlotBloqueado } from './types'
 
@@ -209,11 +209,11 @@ export async function updateBookingEstadoAsync(id: string, estado: EstadoCita): 
 // ─── Disponibilidad ────────────────────────────────────────
 
 export interface Ocupacion {
-  rangos: Array<{ inicio: number; fin: number }>
+  rangos: RangoOcupado[]
   diaCompleto: boolean
 }
 
-/** Rangos ocupados de un día. Cada rango consume una plaza; lanza error si falla la BD. */
+/** Citas y bloqueos de un día, con su tipo para las reglas de capacidad. Lanza error si falla la BD. */
 export async function getOcupacionFechaAsync(fecha: string): Promise<Ocupacion> {
   const supabase = getSupabaseAdmin()
   const [reservasResult, bloqueosResult] = await Promise.all([
@@ -236,31 +236,34 @@ export async function getOcupacionFechaAsync(fecha: string): Promise<Ocupacion> 
   )
 
   const reservas = reservasResult.data as Pick<ReservaRow, 'hora' | 'duracion_minutos' | 'servicio'>[]
-  const reservasRangos = reservas.map((row) => {
+  const reservasRangos: RangoOcupado[] = reservas.map((row) => {
+    const servicios = parseServicios(row.servicio)
     const inicio = timeToMin(row.hora)
-    const duracion = row.duracion_minutos ?? calcularDuracion(parseServicios(row.servicio))
-    return { inicio, fin: inicio + duracion }
+    const duracion = row.duracion_minutos ?? calcularDuracion(servicios)
+    return { inicio, fin: inicio + duracion, tipo: tipoDeServicios(servicios) }
   })
 
-  const bloqueosRangos: Array<{ inicio: number; fin: number }> = []
+  const bloqueosRangos: RangoOcupado[] = []
   for (const b of bloqueos) {
     const todoElDia = b.horaInicio === 'todo-el-dia'
     // Un bloqueo de jornada de una trabajadora reduce una plaza todo el día
     const inicio = todoElDia ? 0 : timeToMin(b.horaInicio)
     const fin = todoElDia ? 24 * 60 : timeToMin(b.horaFin)
     if (todoElDia && b.afecta !== 'trabajadora') continue // cubierto por diaCompleto
-    const plazas = b.afecta === 'trabajadora' ? 1 : NUM_PERSONAL
-    for (let i = 0; i < plazas; i++) bloqueosRangos.push({ inicio, fin })
+    bloqueosRangos.push({ inicio, fin, tipo: b.afecta === 'trabajadora' ? 'trabajadora' : 'cierre' })
   }
 
   return { rangos: [...reservasRangos, ...bloqueosRangos], diaCompleto }
 }
 
-export async function slotDisponibleAsync(fecha: string, hora: string, duracionMinutos: number): Promise<boolean> {
+export async function slotDisponibleAsync(
+  fecha: string,
+  hora: string,
+  duracionMinutos: number,
+  servicios: string[]
+): Promise<boolean> {
   const { rangos, diaCompleto } = await getOcupacionFechaAsync(fecha)
   if (diaCompleto) return false
   const inicio = timeToMin(hora)
-  const fin = inicio + duracionMinutos
-  const ocupadas = rangos.filter((r) => inicio < r.fin && fin > r.inicio).length
-  return ocupadas < NUM_PERSONAL
+  return cabeEnHueco(rangos, inicio, inicio + duracionMinutos, tipoDeServicios(servicios))
 }

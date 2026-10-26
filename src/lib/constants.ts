@@ -10,7 +10,7 @@ export const NAV_LINKS = [
   { label: 'Inicio', href: '#inicio' },
   { label: 'Servicios', href: '#servicios' },
   { label: 'Galería', href: '#galeria' },
-  { label: 'Sobre mí', href: '#sobre-mi' },
+  { label: 'Sobre nosotras', href: '#sobre-mi' },
   { label: 'Reservar', href: '#reservar' },
 ]
 
@@ -40,7 +40,7 @@ export const CATEGORIAS_SERVICIOS: CategoriaServicio[] = [
       { nombre: 'Manicura DBonita', precio: '25€', duracion: '60 min', nota: 'Semipermanente con nivelación' },
       { nombre: 'Manicura Renaissance', precio: '25€', duracion: '60 min' },
       { nombre: 'Manicura Renaissance Semi', precio: '35€', duracion: '90 min' },
-      { nombre: 'Retirado + Manicura', precio: '10€', duracion: '40 min' },
+      { nombre: 'Retirado de esmalte', precio: '5€', duracion: '10 min', nota: 'Si vienes con esmalte de otro centro' },
     ],
   },
   {
@@ -48,14 +48,14 @@ export const CATEGORIAS_SERVICIOS: CategoriaServicio[] = [
     nombre: 'Extensión de Uñas',
     items: [
       { nombre: 'Extensión con Soft Gel', precio: 'Desde 45€', duracion: '90 min' },
-      { nombre: 'Extensión con Gel', precio: 'Desde 45€', duracion: '90 min' },
+      { nombre: 'Extensión con Acrygel', precio: 'Desde 45€', duracion: '90 min' },
     ],
   },
   {
     id: 'pedicura',
     nombre: 'Pedicura',
     items: [
-      { nombre: 'Pedicura Renaissance', precio: '25€', duracion: '45 min' },
+      { nombre: 'Pedicura Renaissance', precio: '30€', duracion: '45 min', nota: 'Sin esmaltado' },
       { nombre: 'Pedicura Renaissance Semi', precio: '35€', duracion: '60 min' },
     ],
   },
@@ -80,14 +80,15 @@ export const CATEGORIAS_SERVICIOS: CategoriaServicio[] = [
       { nombre: 'Bigote cera', precio: '5€' },
       { nombre: 'Cejas hilo', precio: '15€' },
       { nombre: 'Labio superior hilo', precio: '8€' },
+      { nombre: 'Brazos', precio: '15€', duracion: '20 min' },
     ],
   },
   {
     id: 'cejas-pestanas',
     nombre: 'Cejas y Pestañas',
     items: [
-      { nombre: 'Lifting coreano pestañas', precio: '45€', duracion: '90 min' },
-      { nombre: 'Laminado de cejas', precio: '40€', duracion: '60 min' },
+      { nombre: 'Lifting coreano pestañas', precio: '45€', duracion: '90 min', nota: 'Incluye tinte' },
+      { nombre: 'Laminado de cejas', precio: '40€', duracion: '60 min', nota: 'Incluye tinte' },
       { nombre: 'Tinte de cejas', precio: '10€' },
       { nombre: 'Tinte de pestañas', precio: '10€' },
     ],
@@ -102,14 +103,15 @@ export const CATEGORIAS_SERVICIOS: CategoriaServicio[] = [
       { nombre: 'Vitamina C', precio: '59€', duracion: '70 min' },
       { nombre: 'Glow Skin Therapy', precio: '59€', duracion: '90 min' },
       { nombre: 'Skin Balance Therapy', precio: '59€', duracion: '90 min' },
+      { nombre: 'Dermapen de Casmara', precio: '50€', duracion: '50 min', nota: 'Bono 4 sesiones: 160€' },
     ],
   },
   {
     id: 'corporales',
     nombre: 'Corporales',
     items: [
-      { nombre: 'Maderoterapia', precio: 'Desde 55€', duracion: '90 min' },
-      { nombre: 'Drenaje linfático', precio: 'Desde 45€', duracion: '90 min' },
+      { nombre: 'Maderoterapia', precio: 'A consultar', duracion: '90 min', nota: 'Recomendamos bono según tus objetivos' },
+      { nombre: 'Drenaje linfático', precio: 'A consultar', duracion: '90 min', nota: 'Recomendamos bono según tus objetivos' },
       { nombre: 'Corporal personalizado', precio: 'A consultar' },
     ],
   },
@@ -173,13 +175,13 @@ export const SERVICIOS: Servicio[] = [
     categoriaId: 'manicura',
   },
   {
-    id: 'retirado-manicura',
+    id: 'retirado',
     numero: '05',
-    nombre: 'Retirado + Manicura',
-    descripcion: 'Retirado de esmalte anterior más manicura completa.',
-    duracion: '40 min',
-    duracionMinutos: 40,
-    precio: '10€',
+    nombre: 'Retirado de esmalte',
+    descripcion: 'Si vienes con esmalte de otro centro, lo retiramos y dejamos la mano aseada antes de tu servicio.',
+    duracion: '10 min',
+    duracionMinutos: 10,
+    precio: '5€',
     categoriaId: 'manicura',
   },
   // ── Extensión ─────────────────────────────────────────────
@@ -187,7 +189,7 @@ export const SERVICIOS: Servicio[] = [
     id: 'extension-soft-gel',
     numero: '06',
     nombre: 'Extensión con Soft Gel',
-    descripcion: 'Extensiones con soft gel flexible. Aspecto natural y mayor durabilidad.',
+    descripcion: 'Extensiones con soft gel flexible. El precio final depende de la longitud y la decoración.',
     duracion: '90 min',
     duracionMinutos: 90,
     precio: 'Desde 45€',
@@ -196,8 +198,8 @@ export const SERVICIOS: Servicio[] = [
   {
     id: 'extension-gel',
     numero: '07',
-    nombre: 'Extensión con Gel',
-    descripcion: 'Extensiones con gel duro. Personalizables en forma, longitud y diseño.',
+    nombre: 'Extensión con Acrygel',
+    descripcion: 'Extensiones con acrygel. El precio final depende de la longitud y la decoración.',
     duracion: '90 min',
     duracionMinutos: 90,
     precio: 'Desde 45€',
@@ -208,10 +210,10 @@ export const SERVICIOS: Servicio[] = [
     id: 'pedicura-renaissance',
     numero: '08',
     nombre: 'Pedicura Renaissance',
-    descripcion: 'Tratamiento completo para los pies con productos Renaissance.',
+    descripcion: 'Tratamiento completo para los pies con productos Renaissance, sin esmaltado.',
     duracion: '45 min',
     duracionMinutos: 45,
-    precio: '25€',
+    precio: '30€',
     categoriaId: 'pedicura',
   },
   {
@@ -240,8 +242,8 @@ export const SERVICIOS: Servicio[] = [
     numero: '11',
     nombre: 'Decoración básica',
     descripcion: 'Diseño sencillo en una o varias uñas: puntos, líneas, formas geométricas.',
-    duracion: '10 min',
-    duracionMinutos: 10,
+    duracion: '5 min',
+    duracionMinutos: 5,
     precio: '3€',
     categoriaId: 'extras',
   },
@@ -336,12 +338,22 @@ export const SERVICIOS: Servicio[] = [
     precio: '8€',
     categoriaId: 'depilaciones',
   },
+  {
+    id: 'brazos',
+    numero: '21',
+    nombre: 'Brazos',
+    descripcion: 'Depilación de brazos completos.',
+    duracion: '20 min',
+    duracionMinutos: 20,
+    precio: '15€',
+    categoriaId: 'depilaciones',
+  },
   // ── Cejas y Pestañas ──────────────────────────────────────
   {
     id: 'lifting-pestanas',
-    numero: '21',
+    numero: '22',
     nombre: 'Lifting Coreano Pestañas',
-    descripcion: 'Riza y levanta tus pestañas naturales. Ojos más abiertos y expresivos. Resultado hasta 8 semanas.',
+    descripcion: 'Riza y levanta tus pestañas naturales. Incluye tinte. Ojos más abiertos y expresivos, resultado hasta 8 semanas.',
     duracion: '90 min',
     duracionMinutos: 90,
     precio: '45€',
@@ -349,9 +361,9 @@ export const SERVICIOS: Servicio[] = [
   },
   {
     id: 'laminado-cejas',
-    numero: '22',
+    numero: '23',
     nombre: 'Laminado de Cejas',
-    descripcion: 'Cejas voluminosas y definidas sin maquillaje. Efecto saludable y natural.',
+    descripcion: 'Cejas voluminosas y definidas sin maquillaje. Incluye tinte.',
     duracion: '60 min',
     duracionMinutos: 60,
     precio: '40€',
@@ -359,7 +371,7 @@ export const SERVICIOS: Servicio[] = [
   },
   {
     id: 'tinte-cejas',
-    numero: '23',
+    numero: '24',
     nombre: 'Tinte de Cejas',
     descripcion: 'Color y definición para tus cejas. Complemento ideal para el laminado.',
     duracion: '15 min',
@@ -369,7 +381,7 @@ export const SERVICIOS: Servicio[] = [
   },
   {
     id: 'tinte-pestanas',
-    numero: '24',
+    numero: '25',
     nombre: 'Tinte de Pestañas',
     descripcion: 'Intensifica el color de tus pestañas. Complemento perfecto para el lifting.',
     duracion: '15 min',
@@ -380,7 +392,7 @@ export const SERVICIOS: Servicio[] = [
   // ── Faciales ──────────────────────────────────────────────
   {
     id: 'higiene-facial',
-    numero: '25',
+    numero: '26',
     nombre: 'Higiene Facial',
     descripcion: 'Limpieza profunda adaptada a tu piel. Elimina impurezas, hidrata y aporta luminosidad.',
     duracion: '45 min',
@@ -390,7 +402,7 @@ export const SERVICIOS: Servicio[] = [
   },
   {
     id: 'radiofrecuencia',
-    numero: '26',
+    numero: '27',
     nombre: 'Radiofrecuencia',
     descripcion: 'Tratamiento para reafirmar y rejuvenecer la piel con radiofrecuencia.',
     duracion: '45 min',
@@ -400,7 +412,7 @@ export const SERVICIOS: Servicio[] = [
   },
   {
     id: 'detox',
-    numero: '27',
+    numero: '28',
     nombre: 'Detox Facial',
     descripcion: 'Tratamiento desintoxicante que purifica y revitaliza la piel en profundidad.',
     duracion: '70 min',
@@ -410,7 +422,7 @@ export const SERVICIOS: Servicio[] = [
   },
   {
     id: 'vitamina-c',
-    numero: '28',
+    numero: '29',
     nombre: 'Vitamina C',
     descripcion: 'Vitamina C de alta concentración. Ilumina y unifica el tono de la piel.',
     duracion: '70 min',
@@ -420,7 +432,7 @@ export const SERVICIOS: Servicio[] = [
   },
   {
     id: 'glow-skin',
-    numero: '29',
+    numero: '30',
     nombre: 'Glow Skin Therapy',
     descripcion: 'Terapia facial para un efecto glow luminoso y radiante duradero.',
     duracion: '90 min',
@@ -430,7 +442,7 @@ export const SERVICIOS: Servicio[] = [
   },
   {
     id: 'skin-balance',
-    numero: '30',
+    numero: '31',
     nombre: 'Skin Balance Therapy',
     descripcion: 'Terapia equilibrante para pieles mixtas o sensibles. Regula y calma.',
     duracion: '90 min',
@@ -438,30 +450,40 @@ export const SERVICIOS: Servicio[] = [
     precio: '59€',
     categoriaId: 'faciales',
   },
+  {
+    id: 'dermapen',
+    numero: '32',
+    nombre: 'Dermapen de Casmara',
+    descripcion: 'Microagujas para estimular la regeneración de la piel. Bono de 4 sesiones: 160€.',
+    duracion: '50 min',
+    duracionMinutos: 50,
+    precio: '50€',
+    categoriaId: 'faciales',
+  },
   // ── Corporales ────────────────────────────────────────────
   {
     id: 'maderoterapia',
-    numero: '31',
+    numero: '33',
     nombre: 'Maderoterapia',
-    descripcion: 'Masaje corporal con instrumentos de madera para moldear y tonificar el cuerpo.',
+    descripcion: 'Masaje corporal con instrumentos de madera para moldear y tonificar. Recomendamos bono según tus objetivos.',
     duracion: '90 min',
     duracionMinutos: 90,
-    precio: 'Desde 55€',
+    precio: 'A consultar',
     categoriaId: 'corporales',
   },
   {
     id: 'drenaje-linfatico',
-    numero: '32',
+    numero: '34',
     nombre: 'Drenaje Linfático',
-    descripcion: 'Masaje que activa el sistema linfático, reduce retención de líquidos y mejora la circulación.',
+    descripcion: 'Masaje que activa el sistema linfático, reduce retención de líquidos y mejora la circulación. Recomendamos bono según tus objetivos.',
     duracion: '90 min',
     duracionMinutos: 90,
-    precio: 'Desde 45€',
+    precio: 'A consultar',
     categoriaId: 'corporales',
   },
   {
     id: 'corporal-personalizado',
-    numero: '33',
+    numero: '35',
     nombre: 'Corporal Personalizado',
     descripcion: 'Tratamiento corporal a medida según tus necesidades. Consulta disponibilidad.',
     duracion: '60 min',
@@ -481,7 +503,7 @@ export const SUGERENCIAS: Record<string, string[]> = {
   'manicura-dbonita':          ['francesa', 'pedicura-renaissance'],
   'manicura-renaissance':      ['francesa', 'pedicura-renaissance'],
   'manicura-renaissance-semi': ['francesa', 'decoracion-basica'],
-  'retirado-manicura':         ['manicura-dbonita'],
+  'retirado':                  ['manicura-dbonita'],
   // Extensiones → diseño encima
   'extension-soft-gel':        ['francesa', 'decoracion-basica', 'decoracion-elaborada'],
   'extension-gel':             ['francesa', 'decoracion-basica', 'decoracion-elaborada'],
@@ -501,9 +523,10 @@ export const SUGERENCIAS: Record<string, string[]> = {
   'bigote-cera':               ['cejas-cera', 'labio-hilo'],
   'cejas-hilo':                ['laminado-cejas', 'tinte-cejas'],
   'labio-hilo':                ['cejas-hilo'],
+  'brazos':                    ['axilas-cera', 'medias-piernas-cera'],
   // Cejas + Pestañas → combos naturales del área
-  'lifting-pestanas':          ['tinte-pestanas', 'laminado-cejas'],
-  'laminado-cejas':            ['tinte-cejas', 'lifting-pestanas'],
+  'lifting-pestanas':          ['laminado-cejas'],
+  'laminado-cejas':            ['lifting-pestanas'],
   'tinte-cejas':               ['laminado-cejas', 'tinte-pestanas'],
   'tinte-pestanas':            ['lifting-pestanas', 'tinte-cejas'],
   // Faciales → potenciar resultado en la misma sesión
@@ -513,6 +536,7 @@ export const SUGERENCIAS: Record<string, string[]> = {
   'vitamina-c':                ['glow-skin', 'radiofrecuencia'],
   'glow-skin':                 ['radiofrecuencia', 'vitamina-c'],
   'skin-balance':              ['higiene-facial', 'detox'],
+  'dermapen':                  ['vitamina-c', 'higiene-facial'],
   // Corporales → sesión completa
   'maderoterapia':             ['drenaje-linfatico'],
   'drenaje-linfatico':         ['maderoterapia'],
@@ -526,13 +550,13 @@ export const MENSAJES_CRUZADA: Partial<Record<string, string>> = {
   'manicura-dbonita':          'La Manicura DBonita queda perfecta con una francesa. Solo 5€ más y el resultado es de revista.',
   'manicura-renaissance':      'Un acabado francés elevaría tu Renaissance a otro nivel. Un pequeño detalle que lo cambia todo.',
   'manicura-renaissance-semi': 'Añade una decoración básica y convierte tu Renaissance en algo verdaderamente especial.',
-  'retirado-manicura':         'Ya que estás, la Manicura DBonita es el siguiente paso natural — semipermanente y de larga duración.',
+  'retirado':                  'Ya que estás, la Manicura DBonita es el siguiente paso natural — semipermanente y de larga duración.',
   'extension-soft-gel':        'Una francesa sobre tus extensiones de soft gel es una combinación imbatible. 5€ por un acabado de lujo.',
   'extension-gel':             'Añade una francesa o decoración y convierte tus extensiones en algo realmente especial.',
   'pedicura-renaissance':      'Mientras cuidas los pies, ¿qué tal también las manos? La Manicura DBonita es el complemento perfecto.',
   'pedicura-renaissance-semi': 'Pies y manos perfectas en una sola visita. La Manicura DBonita completa el look.',
-  'lifting-pestanas':          'El tinte de pestañas y el lifting coreano son el combo estrella del estudio. Juntos potencian el efecto al máximo.',
-  'laminado-cejas':            'El tinte de cejas es imprescindible junto al laminado — el resultado dura el doble visualmente.',
+  'lifting-pestanas':          'El lifting coreano ya incluye tinte. Combínalo con el laminado de cejas y la mirada cambia por completo.',
+  'laminado-cejas':            'El laminado ya incluye tinte. Súmale el lifting coreano y tendrás cejas y pestañas perfectas en una sola visita.',
   'tinte-cejas':               'Si te tines las cejas, el laminado las deja perfectas todo el día. Es el upgrade que todas repiten.',
   'tinte-pestanas':            'El lifting coreano hace que el tinte dure mucho más y el efecto sea espectacular.',
   'pierna-completa-cera':      'Mientras estás aquí, las axilas se hacen en 15 minutos — una visita y todo listo.',
@@ -651,7 +675,7 @@ export const PREGUNTAS_FAQ: PreguntaFAQ[] = [
   {
     id: 'faq1',
     pregunta: '¿Cuánto dura el esmalte semipermanente?',
-    respuesta: 'El esmalte semipermanente tiene una duración de entre 2 y 3 semanas dependiendo del cuidado y del tipo de uña. Para prolongar su duración, te recomendamos aplicar aceite de cutículas a diario y proteger las manos con guantes al limpiar.',
+    respuesta: 'El esmalte semipermanente tiene una duración de entre 3 y 4 semanas dependiendo del cuidado y del tipo de uña. Para prolongar su duración, te recomendamos aplicar aceite de cutículas a diario y proteger las manos con guantes al limpiar.',
   },
   {
     id: 'faq2',
@@ -666,7 +690,7 @@ export const PREGUNTAS_FAQ: PreguntaFAQ[] = [
   {
     id: 'faq4',
     pregunta: '¿Tengo que llegar con las uñas limpias?',
-    respuesta: 'Te pedimos que llegues sin esmalte en las uñas para aprovechar al máximo el tiempo de tu cita. Si tienes esmalte semipermanente de otro centro, avísanos al reservar y podemos incluir el tiempo de retirada en tu sesión.',
+    respuesta: 'Te pedimos que llegues sin esmalte en las uñas para aprovechar al máximo el tiempo de tu cita. Si vienes con esmalte de otro centro, la retirada tiene un coste de 5€: añade "Retirado de esmalte" al reservar para que contemos ese tiempo.',
   },
   {
     id: 'faq5',
@@ -741,6 +765,18 @@ export const TRATAMIENTOS_DESTACADOS: TratamientoDestacado[] = [
     bg: '#fffbeb',
     imagen: '/img/facial-piel.webp',
   },
+  {
+    id: 'td-5',
+    numero: '05',
+    nombre: 'Drenaje Linfático',
+    descripcion: 'Activa la circulación y reduce la retención de líquidos. Recomendamos bono según tus objetivos.',
+    duracion: '90 min',
+    precio: 'A consultar',
+    color: '#2f6f8f',
+    bg: '#eef6fa',
+    // TODO: sustituir por foto real de corporales cuando la envíen
+    imagen: '/img/facial-piel.webp',
+  },
 ]
 
 // ============================================================
@@ -748,9 +784,9 @@ export const TRATAMIENTOS_DESTACADOS: TratamientoDestacado[] = [
 // ============================================================
 
 export const STATS = [
-  { valor: '500+', etiqueta: 'Clientas felices' },
+  { valor: '200+', etiqueta: 'Clientas felices' },
   { valor: '100%', etiqueta: 'Resultados naturales' },
-  { valor: '5+',   etiqueta: 'Años de experiencia' },
+  { valor: '15+',  etiqueta: 'Años de experiencia' },
   { valor: '5.0',  etiqueta: 'Valoración Google' },
 ]
 

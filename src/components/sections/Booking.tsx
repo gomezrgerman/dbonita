@@ -13,8 +13,8 @@ import {
   type Servicio,
 } from '@/lib/constants'
 import { useLang } from '@/lib/i18n'
-import { NUM_PERSONAL } from '@/lib/constants'
-import { HORARIO, DIAS_CERRADO, timeToMin } from '@/lib/reservas-reglas'
+import { DIAS_CERRADO, calcularSenalCentimos, horarioDelDia, timeToMin } from '@/lib/reservas-reglas'
+import { cabeEnHueco, tipoDeServicios, type RangoOcupado } from '@/lib/reservas-capacidad'
 import type { ReservaPublica } from '@/lib/types'
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -25,9 +25,9 @@ function toFechaStr(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
-function generarSlots(duracionMin: number): string[] {
+function generarSlots(fecha: string, duracionMin: number): string[] {
   const slots: string[] = []
-  for (const { apertura, cierre } of HORARIO) {
+  for (const { apertura, cierre } of horarioDelDia(fecha)) {
     let cursor = apertura
     while (cursor + duracionMin <= cierre) {
       const h = Math.floor(cursor / 60).toString().padStart(2, '0')
@@ -266,7 +266,7 @@ export default function Booking() {
   const [reservaGuardada, setReservaGuardada] = useState<ReservaPublica | null>(null)
   const [avisoPago, setAvisoPago] = useState<string | null>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
-  const [horasOcupadas, setHorasOcupadas] = useState<Array<{ inicio: number; fin: number }>>([])
+  const [horasOcupadas, setHorasOcupadas] = useState<RangoOcupado[]>([])
   const [diaCompletoSupa, setDiaCompletoSupa] = useState(false)
   const [diasBloqueadosMes, setDiasBloqueadosMes] = useState<Set<string>>(new Set())
   const [cargandoSlots, setCargandoSlots] = useState(false)
@@ -308,18 +308,18 @@ export default function Booking() {
   // Si el carrito mezcla 2+ familias distintas, el modal de venta cruzada se omite.
   const FAMILIAS: Record<string, string> = {
     manicura: 'unas', 'manicura-dbonita': 'unas', 'manicura-renaissance': 'unas',
-    'manicura-renaissance-semi': 'unas', 'retirado-manicura': 'unas',
+    'manicura-renaissance-semi': 'unas', retirado: 'unas',
     'extension-soft-gel': 'unas', 'extension-gel': 'unas',
     'pedicura-renaissance': 'unas', 'pedicura-renaissance-semi': 'unas',
     francesa: 'unas', 'decoracion-basica': 'unas', 'decoracion-elaborada': 'unas',
     'ingles-cera': 'depilacion', 'pierna-completa-cera': 'depilacion',
     'medias-piernas-cera': 'depilacion', 'axilas-cera': 'depilacion',
     'cejas-cera': 'depilacion', 'bigote-cera': 'depilacion',
-    'cejas-hilo': 'depilacion', 'labio-hilo': 'depilacion',
+    'cejas-hilo': 'depilacion', 'labio-hilo': 'depilacion', brazos: 'depilacion',
     'lifting-pestanas': 'cara', 'laminado-cejas': 'cara',
     'tinte-cejas': 'cara', 'tinte-pestanas': 'cara',
     'higiene-facial': 'facial', radiofrecuencia: 'facial', detox: 'facial',
-    'vitamina-c': 'facial', 'glow-skin': 'facial', 'skin-balance': 'facial',
+    'vitamina-c': 'facial', 'glow-skin': 'facial', 'skin-balance': 'facial', dermapen: 'facial',
     maderoterapia: 'corporal', 'drenaje-linfatico': 'corporal',
     'corporal-personalizado': 'corporal',
   }
@@ -349,7 +349,7 @@ export default function Booking() {
         if (!res.ok) throw new Error('disponibilidad')
         return res.json()
       })
-      .then(({ rangos, diaCompleto }: { rangos: Array<{ inicio: number; fin: number }>; diaCompleto: boolean }) => {
+      .then(({ rangos, diaCompleto }: { rangos: RangoOcupado[]; diaCompleto: boolean }) => {
         setHorasOcupadas(rangos)
         setDiaCompletoSupa(diaCompleto)
       })
@@ -391,9 +391,12 @@ export default function Booking() {
   }, [paso])
 
   const slotsBase = useMemo(
-    () => (duracionTotal > 0 ? generarSlots(duracionTotal) : []),
-    [duracionTotal]
+    () => (duracionTotal > 0 && fechaStr ? generarSlots(fechaStr, duracionTotal) : []),
+    [duracionTotal, fechaStr]
   )
+
+  const tipoCita = useMemo(() => tipoDeServicios(carrito), [carrito])
+  const senalEuros = useMemo(() => String(calcularSenalCentimos(carrito) / 100), [carrito])
 
   const slotsDisponibles = useMemo(() => {
     if (duracionTotal === 0 || !fechaStr) return slotsBase
@@ -402,10 +405,9 @@ export default function Booking() {
     return slotsBase.filter((slot) => {
       const inicio = timeToMin(slot)
       const fin = inicio + duracionTotal
-      const ocupados = horasOcupadas.filter((o) => inicio < o.fin && fin > o.inicio).length
-      return ocupados < NUM_PERSONAL
+      return cabeEnHueco(horasOcupadas, inicio, fin, tipoCita)
     })
-  }, [duracionTotal, fechaStr, slotsBase, horasOcupadas, diaCompletoSupa, cargandoSlots])
+  }, [duracionTotal, fechaStr, slotsBase, horasOcupadas, diaCompletoSupa, cargandoSlots, tipoCita])
 
   const diasMes = getDiasDelMes(año, mes)
   const fechaFormateada = diaSeleccionado
@@ -1112,7 +1114,7 @@ export default function Booking() {
                     e.currentTarget.style.background = enviando || !form.nombre || !form.telefono || !form.email ? 'var(--color-accent)' : '#000'
                   }}
                 >
-                  {enviando ? t.booking.form.submitPreparing : t.booking.form.submitBtn}
+                  {enviando ? t.booking.form.submitPreparing : t.booking.form.submitBtn.replace('{amount}', senalEuros)}
                 </button>
               </form>
             </motion.div>
@@ -1148,9 +1150,9 @@ export default function Booking() {
               <div className="clay-card p-4 flex items-start gap-3" style={{ borderRadius: '14px' }}>
                 <CreditCard size={18} className="shrink-0 mt-0.5 text-black" aria-hidden="true" />
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm text-black" style={{ fontWeight: 700 }}>{t.booking.payment.depositTitle}</p>
+                  <p className="text-sm text-black" style={{ fontWeight: 700 }}>{t.booking.payment.depositTitle.replace('{amount}', senalEuros)}</p>
                   <p className="text-xs text-text-muted leading-relaxed" style={{ fontWeight: 400 }}>
-                    {t.booking.payment.depositBody}
+                    {t.booking.payment.depositBody.replace('{amount}', senalEuros)}
                   </p>
                 </div>
               </div>
@@ -1180,6 +1182,7 @@ export default function Booking() {
                   onExito={handlePagoExito}
                   tPayment={{
                     ...t.booking.payment,
+                    payBtn: t.booking.payment.payBtn.replace('{amount}', senalEuros),
                     errorPayment: t.booking.form.errorPayment,
                     errorSave: t.booking.form.errorSave,
                   }}

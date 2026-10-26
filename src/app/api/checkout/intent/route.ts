@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { SERVICIOS } from '@/lib/constants'
-import { IMPORTE_SENAL_CENTIMOS, validarSolicitudReserva } from '@/lib/reservas-reglas'
+import { calcularSenalCentimos, validarSolicitudReserva } from '@/lib/reservas-reglas'
 import { slotDisponibleAsync } from '@/lib/supabase-store'
 import { getStripe } from '@/lib/stripe-server'
 
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   // Verificación de disponibilidad en servidor antes de cobrar.
   // Si la BD falla no se cobra: mejor un error que una doble reserva.
   try {
-    const disponible = await slotDisponibleAsync(d.fecha, d.hora, d.duracionMinutos)
+    const disponible = await slotDisponibleAsync(d.fecha, d.hora, d.duracionMinutos, d.servicios)
     if (!disponible) {
       return NextResponse.json(
         { error: 'Este horario ya no está disponible. Por favor, elige otro.' },
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       .join(' + ')
 
     const paymentIntent = await getStripe().paymentIntents.create({
-      amount: IMPORTE_SENAL_CENTIMOS,
+      amount: calcularSenalCentimos(d.servicios),
       currency: 'eur',
       automatic_payment_methods: { enabled: true },
       description: `Señal reserva D Bonita — ${servicioDesc}`.slice(0, 1000),

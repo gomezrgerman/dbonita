@@ -90,10 +90,10 @@ export default function Footer() {
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:hola@dbonita.es" className="flex items-center gap-3 text-sm transition-colors duration-200" style={{ color: 'rgba(255,255,255,0.5)' }}
+                  <a href="mailto:dbonitadenia@gmail.com" className="flex items-center gap-3 text-sm transition-colors duration-200" style={{ color: 'rgba(255,255,255,0.5)' }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')} onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}>
                     <Mail size={14} style={{ color: 'var(--color-pomegranate)', flexShrink: 0 }} />
-                    hola@dbonita.es
+                    dbonitadenia@gmail.com
                   </a>
                 </li>
                 <li className="flex items-start gap-3 text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>
