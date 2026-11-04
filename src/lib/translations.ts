@@ -61,6 +61,8 @@ export const translations = {
         'Manicura Semipermanente': 'Manicura Semipermanente',
         'Lifting de Pestañas': 'Lifting de Pestañas',
         'Extensión de Uñas': 'Extensión de Uñas',
+        'Tratamiento Facial': 'Tratamiento Facial',
+        'Depilación': 'Depilación',
       } as Record<string, string>,
     },
     booking: {
@@ -342,6 +344,8 @@ export const translations = {
         'Manicura Semipermanente': 'Semi-Permanent Manicure',
         'Lifting de Pestañas': 'Lash Lifting',
         'Extensión de Uñas': 'Nail Extensions',
+        'Tratamiento Facial': 'Facial Treatment',
+        'Depilación': 'Waxing',
       } as Record<string, string>,
     },
     booking: {
