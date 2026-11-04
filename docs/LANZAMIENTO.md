@@ -1,0 +1,92 @@
+# Lanzamiento de D Bonita: pasos pendientes
+
+Estado a 4 de noviembre de 2026. La web está en producción detrás de "Próximamente"
+(`SITE_ENABLED` no es `true`). Todo lo de código está hecho; lo que queda son cuentas,
+claves y pruebas.
+
+Las variables se configuran en **Vercel → proyecto dbonita → Settings → Environment
+Variables**, entorno **Production**. Cada cambio de variables necesita un **Redeploy**
+(Deployments → último → ⋯ → Redeploy) para que se aplique.
+
+---
+
+## 1. Base de datos (Supabase)
+
+- [ ] Abrir el proyecto en supabase.com → **SQL Editor** → New query.
+- [ ] Pegar el contenido de `supabase/schema.sql` y pulsar **Run**. Se puede ejecutar
+      aunque ya se hubiera hecho antes: no borra datos.
+- [ ] Comprobar en **Table Editor** que existen las tablas `reservas` y `bloqueos`.
+- [ ] Confirmar que en Vercel `SUPABASE_SERVICE_ROLE_KEY` es la **service_role** de
+      Project Settings → API (no la anon).
+
+## 2. Pagos (Stripe)
+
+Hacer primero todo en **modo prueba** y repetir en **modo real** al final (paso 7).
+
+- [ ] Entrar en dashboard.stripe.com con la cuenta del negocio (titular: Diana).
+- [ ] Developers → API keys → copiar las claves de prueba.
+- [ ] En Vercel, **añadir** (ahora no existen):
+  - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` = `pk_test_...`
+  - `STRIPE_SECRET_KEY` = `sk_test_...`
+- [ ] Developers → Webhooks → **Add endpoint**:
+  - URL: `https://www.dbonita.es/api/webhook/stripe` (**con www**: Stripe no sigue redirecciones)
+  - Evento: `payment_intent.succeeded`
+- [ ] Copiar el **Signing secret** (`whsec_...`) y **sustituir** en Vercel
+      `STRIPE_WEBHOOK_SECRET` (el actual es de hace meses y puede no corresponder).
+
+## 3. Emails (EmailJS)
+
+- [ ] Crear cuenta en emailjs.com (plan gratuito: 200 emails/mes).
+- [ ] Email Services → Add Service → Gmail → conectar `dbonitadenia@gmail.com`.
+- [ ] Email Templates → crear 3 plantillas con el HTML de `docs/emailjs/`
+      (cada archivo indica asunto, destinatario y remitente):
+  - `confirmacion.html` → email a la clienta al reservar
+  - `cancelacion.html` → email a la clienta al cancelar
+  - `negocio.html` → aviso al negocio de cada reserva
+- [ ] Account → Security: activar **"Allow EmailJS API for non-browser applications"**
+      y **"Use Private Key"**.
+- [ ] En Vercel, añadir:
+  - `EMAILJS_SERVICE_ID` (Email Services)
+  - `EMAILJS_PUBLIC_KEY` y `EMAILJS_PRIVATE_KEY` (Account → API keys)
+  - `EMAILJS_TEMPLATE_CONFIRMACION`, `EMAILJS_TEMPLATE_CANCELACION`, `EMAILJS_TEMPLATE_NEGOCIO`
+  - `EMAILJS_BUSINESS_EMAIL` = `dbonitadenia@gmail.com`
+
+## 4. Resto de variables en Vercel
+
+- [ ] `NEXT_PUBLIC_SITE_URL` = `https://www.dbonita.es` (con www; se usa en el enlace de cancelar)
+- [ ] `NEXT_PUBLIC_BUSINESS_EMAIL` = `dbonitadenia@gmail.com` (añadir, no existe)
+- [ ] `PANEL_PASSWORD`: si sigue siendo `cambiar-antes-de-produccion`, poner una
+      contraseña larga y dársela a las dueñas.
+- [ ] `PREVIEW_TOKEN`: ya existe; apuntarlo para el paso 6.
+- [ ] **Redeploy** de producción.
+
+## 5. Contenido
+
+- [ ] Foto corporal real para la tarjeta "Drenaje Linfático" (ahora usa un masaje facial provisional).
+- [ ] Permiso de las clientas que salen con la cara (fotos de faciales y hombre con mascarilla).
+- [ ] Repasar con las dueñas precios, duraciones y textos de servicios.
+
+## 6. Prueba completa en modo prueba (sin abrir la web al público)
+
+Entrar en `https://www.dbonita.es/?preview=PREVIEW_TOKEN` (deja una cookie de 7 días).
+
+- [ ] Reservar un servicio desde el móvil hasta el pago.
+- [ ] Pagar con la tarjeta de prueba `4242 4242 4242 4242`, fecha futura, CVC `123`.
+- [ ] Llega el email de confirmación a la clienta y el aviso al negocio.
+- [ ] La reserva aparece en `https://www.dbonita.es/panel`.
+- [ ] Ese hueco ya no se ofrece en el calendario.
+- [ ] Cancelar con el enlace del email → llega el email de cancelación y Stripe muestra el reembolso.
+- [ ] En Stripe → Webhooks, el endpoint muestra entregas con respuesta 200.
+
+## 7. Pasar a pagos reales
+
+- [ ] Stripe: completar la activación de la cuenta (datos del negocio e IBAN).
+- [ ] Repetir el paso 2 en **modo real**: claves `pk_live_...` / `sk_live_...` y un
+      webhook nuevo en modo real con su propio `whsec_...`.
+- [ ] Redeploy y hacer una reserva real de 10 € para comprobarlo (se puede cancelar y se reembolsa).
+
+## 8. Abrir la web
+
+- [ ] En Vercel: `SITE_ENABLED` = `true` → Redeploy.
+- [ ] Google Search Console: añadir `https://www.dbonita.es` y enviar `https://www.dbonita.es/sitemap.xml`.
+- [ ] Google Business Profile e Instagram: poner el enlace a la web.
