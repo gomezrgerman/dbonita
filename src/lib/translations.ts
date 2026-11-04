@@ -56,6 +56,7 @@ export const translations = {
       headlinePre: 'Resultados que',
       headlineAccent: 'hablan',
       instagramCta: 'Ver más en @dbonitadenia',
+      showMore: 'Ver {n} trabajos más',
       treatments: {
         'Nail Art': 'Nail Art',
         'Manicura Semipermanente': 'Manicura Semipermanente',
@@ -339,6 +340,7 @@ export const translations = {
       headlinePre: 'Results that',
       headlineAccent: 'speak',
       instagramCta: 'See more at @dbonitadenia',
+      showMore: 'See {n} more',
       treatments: {
         'Nail Art': 'Nail Art',
         'Manicura Semipermanente': 'Semi-Permanent Manicure',

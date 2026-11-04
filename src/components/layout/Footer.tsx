@@ -60,12 +60,12 @@ export default function Footer() {
             <div className="flex flex-col gap-4">
               <h4 className="label-upper" style={{ color: 'rgba(255,255,255,0.3)' }}>{t.footer.navigation}</h4>
               <nav aria-label="Navegación footer">
-                <ul className="flex flex-col gap-3">
+                <ul className="flex flex-col gap-0 md:gap-3">
                   {NAV_LINKS.map((link, i) => (
                     <li key={link.href}>
                       <button
                         onClick={() => goTo(link.href)}
-                        className="text-sm transition-colors duration-200"
+                        className="inline-flex items-center min-h-[44px] md:min-h-0 text-sm transition-colors duration-200"
                         style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}
                         onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
                         onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}
@@ -81,16 +81,16 @@ export default function Footer() {
             {/* Contacto */}
             <div className="flex flex-col gap-4">
               <h4 className="label-upper" style={{ color: 'rgba(255,255,255,0.3)' }}>{t.footer.contact}</h4>
-              <ul className="flex flex-col gap-3">
+              <ul className="flex flex-col gap-0 md:gap-3">
                 <li>
-                  <a href="tel:+34657332722" className="flex items-center gap-3 text-sm transition-colors duration-200" style={{ color: 'rgba(255,255,255,0.5)' }}
+                  <a href="tel:+34657332722" className="flex items-center gap-3 min-h-[44px] md:min-h-0 text-sm transition-colors duration-200" style={{ color: 'rgba(255,255,255,0.5)' }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')} onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}>
                     <Phone size={14} style={{ color: 'var(--color-pomegranate)', flexShrink: 0 }} />
                     +34 657 33 27 22
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:dbonitadenia@gmail.com" className="flex items-center gap-3 text-sm transition-colors duration-200" style={{ color: 'rgba(255,255,255,0.5)' }}
+                  <a href="mailto:dbonitadenia@gmail.com" className="flex items-center gap-3 min-h-[44px] md:min-h-0 text-sm transition-colors duration-200" style={{ color: 'rgba(255,255,255,0.5)' }}
                     onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')} onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.5)')}>
                     <Mail size={14} style={{ color: 'var(--color-pomegranate)', flexShrink: 0 }} />
                     dbonitadenia@gmail.com
@@ -114,10 +114,10 @@ export default function Footer() {
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)', fontWeight: 400 }}>
               © 2026 {SITE_NAME} — {t.footer.copyright}
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <a
                 href="/privacidad"
-                className="text-xs transition-colors duration-200"
+                className="inline-flex items-center min-h-[44px] px-2 text-xs transition-colors duration-200"
                 style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
@@ -126,7 +126,7 @@ export default function Footer() {
               </a>
               <a
                 href="/aviso-legal"
-                className="text-xs transition-colors duration-200"
+                className="inline-flex items-center min-h-[44px] px-2 text-xs transition-colors duration-200"
                 style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.7)')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255,255,255,0.3)')}
@@ -151,7 +151,7 @@ export default function Footer() {
               href="https://german-gomez.es"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs transition-all duration-500"
+              className="inline-flex items-center min-h-[44px] px-2 text-xs transition-all duration-500"
               style={{
                 color: 'rgba(249,188,26,0.5)',
                 fontWeight: 400,

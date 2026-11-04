@@ -212,7 +212,7 @@ export default function Contact() {
                       href="https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-sans text-xs text-text-muted underline underline-offset-2 hover:text-text transition-colors"
+                      className="inline-flex items-center min-h-[44px] px-3 font-sans text-xs text-text-muted underline underline-offset-2 hover:text-text transition-colors"
                       style={{ fontWeight: 500 }}
                     >
                       {t.contact.openMaps}

@@ -93,7 +93,7 @@ export default function Chatbot() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-24 right-6 lg:bottom-6 z-50 w-14 h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-110"
+          className="chat-fab fixed bottom-24 right-4 sm:right-6 lg:bottom-6 z-50 w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-110"
           style={{
             background: 'var(--color-brand-blue)',
             boxShadow: '0 4px 16px rgba(108,196,230,0.35), 0 0 0 0 rgba(108,196,230,0.1)',

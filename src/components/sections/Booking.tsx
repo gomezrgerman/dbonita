@@ -332,6 +332,15 @@ export default function Booking() {
   const fechaStr = diaSeleccionado ? toFechaStr(año, mes, diaSeleccionado) : ''
   const monthName = cal.months[mes]
 
+  // Oculta el boton flotante del chat mientras haya un modal de la reserva abierto
+  const overlayAbierto = mostrarSugerencias || mostrarHojaCarrito
+  useEffect(() => {
+    const root = document.documentElement
+    if (overlayAbierto) root.dataset.overlay = 'open'
+    else delete root.dataset.overlay
+    return () => { delete root.dataset.overlay }
+  }, [overlayAbierto])
+
   useEffect(() => {
     const desde = toFechaStr(año, mes, 1)
     const hasta = toFechaStr(año, mes, new Date(año, mes + 1, 0).getDate())

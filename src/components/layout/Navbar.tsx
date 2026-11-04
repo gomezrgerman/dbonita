@@ -191,7 +191,7 @@ export default function Navbar() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.06 }}
                   onClick={() => goTo(link.href)}
-                  className="text-sm font-medium text-left text-text-muted hover:text-black transition-colors py-2 border-b border-accent last:border-0"
+                  className="text-base font-medium text-left text-text hover:text-black transition-colors py-3 min-h-[44px] border-b border-accent last:border-0"
                 >
                   {t.nav.links[i]}
                 </motion.button>
@@ -208,7 +208,7 @@ export default function Navbar() {
                   <button
                     key={l}
                     onClick={() => setLang(l)}
-                    className="text-xs px-3 py-1.5 rounded-card border transition-all duration-200"
+                    className="text-xs px-4 min-h-[44px] min-w-[44px] rounded-card border transition-all duration-200"
                     style={{
                       fontFamily: '"Space Mono", monospace',
                       fontWeight: 700,
