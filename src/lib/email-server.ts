@@ -39,7 +39,7 @@ async function sendViaEmailJS(templateId: string | undefined, params: Record<str
 }
 
 function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://dbonita.es'
+  return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dbonita.es'
 }
 
 export async function enviarConfirmacion(booking: Booking): Promise<void> {
