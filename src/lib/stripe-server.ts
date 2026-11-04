@@ -3,6 +3,7 @@ import Stripe from 'stripe'
 import {
   createBookingAsync,
   getBookingByPaymentIntentAsync,
+  slotDisponibleAsync,
 } from './supabase-store'
 import { enviarConfirmacion, enviarNotificacionNegocio } from './email-server'
 import type { Booking } from './types'
@@ -14,6 +15,25 @@ export function getStripe(): Stripe {
   if (!key) throw new Error('STRIPE_SECRET_KEY no configurada')
   if (!_stripe) _stripe = new Stripe(key)
   return _stripe
+}
+
+/** El hueco se ocupó entre el inicio del pago y su confirmación; la señal ya se ha devuelto. */
+export class HorarioOcupadoError extends Error {
+  constructor() {
+    super('Ese horario se acaba de ocupar. Te hemos devuelto la señal; por favor, elige otra hora.')
+    this.name = 'HorarioOcupadoError'
+  }
+}
+
+async function devolverSenal(paymentIntentId: string): Promise<void> {
+  try {
+    await getStripe().refunds.create(
+      { payment_intent: paymentIntentId },
+      { idempotencyKey: `reembolso-ocupado-${paymentIntentId}` }
+    )
+  } catch (err) {
+    if ((err as { code?: string }).code !== 'charge_already_refunded') throw err
+  }
 }
 
 function esViolacionUnica(err: unknown): boolean {
@@ -40,6 +60,16 @@ export async function confirmarReservaDesdePago(pi: Stripe.PaymentIntent): Promi
     servicios = []
   }
 
+  // Segunda comprobación de disponibilidad: dos clientas pueden haber pagado el mismo
+  // hueco a la vez. Si ya no cabe, se devuelve la señal en lugar de crear una doble reserva.
+  const fecha = meta.fecha || ''
+  const hora = meta.hora || ''
+  const duracionMinutos = Number(meta.duracion_minutos) || 0
+  if (!(await slotDisponibleAsync(fecha, hora, duracionMinutos, servicios))) {
+    await devolverSenal(pi.id)
+    throw new HorarioOcupadoError()
+  }
+
   let booking: Booking
   try {
     booking = await createBookingAsync({
@@ -47,9 +77,9 @@ export async function confirmarReservaDesdePago(pi: Stripe.PaymentIntent): Promi
       clienteEmail: meta.email || '',
       clienteTelefono: meta.telefono || '',
       servicios,
-      duracionMinutos: Number(meta.duracion_minutos) || 0,
-      fecha: meta.fecha || '',
-      hora: meta.hora || '',
+      duracionMinutos,
+      fecha,
+      hora,
       notas: meta.notas || '',
       importePagado: pi.amount / 100,
       pagado: true,

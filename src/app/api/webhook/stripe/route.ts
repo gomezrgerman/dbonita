@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
-import { confirmarReservaDesdePago, getStripe } from '@/lib/stripe-server'
+import { confirmarReservaDesdePago, getStripe, HorarioOcupadoError } from '@/lib/stripe-server'
 
 export async function POST(req: Request) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -28,6 +28,11 @@ export async function POST(req: Request) {
     try {
       await confirmarReservaDesdePago(pi)
     } catch (err) {
+      if (err instanceof HorarioOcupadoError) {
+        // Ya reembolsado: no hay nada que reintentar
+        console.warn('Webhook: hueco ocupado, señal devuelta:', pi.id)
+        return NextResponse.json({ received: true, reembolsado: true })
+      }
       console.error('Webhook: error creando reserva:', err)
       // 500 para que Stripe reintente el webhook
       return NextResponse.json({ error: 'Error guardando reserva' }, { status: 500 })
