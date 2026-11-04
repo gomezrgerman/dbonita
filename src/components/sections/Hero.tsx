@@ -108,6 +108,23 @@ export default function Hero() {
         Así aunque se desplace nunca aparecen bordes blancos.
         En desktop UnicornStudio gestiona el parallax internamente (no se aplica transform).
       */}
+      {/*
+        Imagen fija de respaldo con el mismo diseño que la animación.
+        Se ve si la clienta rechaza cookies o mientras carga UnicornStudio;
+        cuando la animación arranca, su canvas queda por encima.
+      */}
+      <picture className="absolute inset-0 z-0">
+        <source media="(min-width: 768px)" srcSet="/img/hero-fallback-desktop.webp" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/img/hero-fallback-mobile.webp"
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+          className="w-full h-full object-cover"
+        />
+      </picture>
+
       <div
         ref={bgRef}
         className="absolute z-0 md:inset-0"
