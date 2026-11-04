@@ -9,9 +9,9 @@ export default function Contact() {
   const { t } = useLang()
   const { consent, accept } = useCookieConsent()
   const instagramUrl =
-    process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://instagram.com/dbonita'
+    process.env.NEXT_PUBLIC_INSTAGRAM_URL ?? 'https://www.instagram.com/dbonitadenia/'
   const whatsappNumber =
-    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34600000000'
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34657332722'
 
   const infoContacto = [
     {
@@ -23,8 +23,8 @@ export default function Contact() {
     {
       icono: Mail,
       etiqueta: t.contact.labels.email,
-      valor: 'hola@dbonita.es',
-      href: 'mailto:hola@dbonita.es',
+      valor: 'dbonitadenia@gmail.com',
+      href: 'mailto:dbonitadenia@gmail.com',
     },
     {
       icono: MapPin,
@@ -212,7 +212,7 @@ export default function Contact() {
                       href="https://www.google.com/maps/search/D+Bonita+Carrer+del+Cop+5+Denia+Alicante"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-sans text-xs text-text-muted underline underline-offset-2 hover:text-text transition-colors"
+                      className="inline-flex items-center min-h-[44px] px-3 font-sans text-xs text-text-muted underline underline-offset-2 hover:text-text transition-colors"
                       style={{ fontWeight: 500 }}
                     >
                       {t.contact.openMaps}

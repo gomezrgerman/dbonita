@@ -28,7 +28,7 @@ export default function PrivacidadPage() {
               <strong>Titular:</strong> Diana Alexandra Pulgarin Morales<br />
               <strong>NIF:</strong> 54738932J<br />
               <strong>Dirección:</strong> Carrer del Cop, 5, Piso 1 Puerta 2, 03700 Dénia, Alicante, España<br />
-              <strong>Email:</strong> {process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'info@dbonita.es'}<br />
+              <strong>Email:</strong> {process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'dbonitadenia@gmail.com'}<br />
               <strong>Teléfono:</strong> {process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ? `+${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}` : '+34 600 000 000'}
             </p>
           </section>
@@ -43,7 +43,7 @@ export default function PrivacidadPage() {
               <li><strong>Notas adicionales</strong> (opcional) — para personalizar el tratamiento (alergias, preferencias de diseño).</li>
             </ul>
             <p className="mt-3">
-              El pago de la señal (10 €) se procesa a través de <strong>Stripe</strong>. D Bonita no almacena datos de tarjeta bancaria en ningún momento.
+              El pago de la señal (10 €, o 5 € en servicios de menos de 10 €) se procesa a través de <strong>Stripe</strong>. D Bonita no almacena datos de tarjeta bancaria en ningún momento.
             </p>
           </section>
 
@@ -85,7 +85,7 @@ export default function PrivacidadPage() {
             </ul>
             <p className="mt-3">
               Para ejercer estos derechos, envía un email a{' '}
-              <strong>{process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'info@dbonita.es'}</strong>{' '}
+              <strong>{process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'dbonitadenia@gmail.com'}</strong>{' '}
               indicando el derecho que deseas ejercer y una copia de tu DNI. Respondemos en un plazo máximo de 30 días.
             </p>
             <p className="mt-2">

@@ -28,7 +28,7 @@ export default function AvisoLegalPage() {
               <strong>Nombre:</strong> Diana Alexandra Pulgarin Morales<br />
               <strong>NIF:</strong> 54738932J<br />
               <strong>Domicilio:</strong> Carrer del Cop, 5, Piso 1 Puerta 2, 03700 Dénia, Alicante, España<br />
-              <strong>Email de contacto:</strong> {process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'info@dbonita.es'}<br />
+              <strong>Email de contacto:</strong> {process.env.NEXT_PUBLIC_BUSINESS_EMAIL || 'dbonitadenia@gmail.com'}<br />
               <strong>Actividad:</strong> Centro de estética — servicios de belleza y bienestar
             </p>
           </section>
@@ -36,7 +36,7 @@ export default function AvisoLegalPage() {
           <section>
             <h2 className="font-bold text-black text-base mb-3">2. Objeto y ámbito de aplicación</h2>
             <p>
-              El presente Aviso Legal regula el acceso y uso del sitio web <strong>dbonita.es</strong> (en adelante, "el Sitio"), cuya titularidad corresponde a Diana Alexandra Pulgarin Morales. El acceso al Sitio implica la aceptación plena y sin reservas de las condiciones aquí establecidas.
+              El presente Aviso Legal regula el acceso y uso del sitio web <strong>dbonita.es</strong> (en adelante, &ldquo;el Sitio&rdquo;), cuya titularidad corresponde a Diana Alexandra Pulgarin Morales. El acceso al Sitio implica la aceptación plena y sin reservas de las condiciones aquí establecidas.
             </p>
           </section>
 
@@ -57,7 +57,7 @@ export default function AvisoLegalPage() {
           <section>
             <h2 className="font-bold text-black text-base mb-3">5. Política de reservas y pagos</h2>
             <p className="mb-2">
-              La reserva de cita requiere el abono de una <strong>señal de 10 €</strong> a través de la pasarela de pago Stripe. El resto del importe se abona en el establecimiento el día de la cita.
+              La reserva de cita requiere el abono de una <strong>señal de 10 €</strong> (5 € si el importe total de los servicios es inferior a 10 €) a través de la pasarela de pago Stripe. El resto del importe se abona en el establecimiento el día de la cita.
             </p>
             <p className="mb-2">
               <strong>Política de cancelación:</strong> La cancelación es gratuita hasta <strong>24 horas antes</strong> de la cita. Pasado ese plazo, la señal no es reembolsable, salvo causa de fuerza mayor debidamente acreditada.

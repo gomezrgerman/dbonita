@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { Instagram } from 'lucide-react'
@@ -8,9 +9,11 @@ import { GalleryClipDefs, getClipPathId } from '@/components/ui/image-mask'
 import { useLang } from '@/lib/i18n'
 
 const INSTAGRAM_URL = 'https://www.instagram.com/dbonitadenia/'
+const MOBILE_VISIBLE = 8
 
 export default function Gallery() {
   const { t } = useLang()
+  const [verTodo, setVerTodo] = useState(false)
   return (
     <section id="galeria" className="section-padding bg-bg overflow-hidden" aria-label="Galería de resultados">
       {/* SVG clip-paths definitions */}
@@ -42,7 +45,7 @@ export default function Gallery() {
             initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.2 }}
             href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-text-muted hover:text-black transition-colors"
+            className="flex items-center gap-2 min-h-[44px] text-sm text-text-muted hover:text-black transition-colors"
             style={{ fontWeight: 500 }}
             aria-label="Ver más en Instagram de D Bonita Dénia"
           >
@@ -60,7 +63,7 @@ export default function Gallery() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.04 }}
-              className="group flex flex-col gap-2"
+              className={`group flex-col gap-2 ${!verTodo && i >= MOBILE_VISIBLE ? 'hidden md:flex' : 'flex'}`}
               role="listitem"
             >
               {/* Imagen con clip-path — sin texto dentro para evitar que se recorte */}
@@ -84,6 +87,20 @@ export default function Gallery() {
             </motion.div>
           ))}
         </div>
+
+        {/* Ver mas — solo movil, para no alargar la pagina */}
+        {!verTodo && GALERIA_ITEMS.length > MOBILE_VISIBLE && (
+          <div className="flex justify-center mt-8 md:hidden">
+            <button
+              type="button"
+              onClick={() => setVerTodo(true)}
+              className="btn-secondary min-h-[44px]"
+              aria-expanded={verTodo}
+            >
+              {t.gallery.showMore.replace('{n}', String(GALERIA_ITEMS.length - MOBILE_VISIBLE))}
+            </button>
+          </div>
+        )}
 
         {/* CTA */}
         <motion.div

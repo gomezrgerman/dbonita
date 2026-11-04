@@ -202,3 +202,9 @@ a[href*="unicorn.studio"],
 [data-us-watermark] {
   display: none !important;
 }
+
+/* Chat flotante: oculto mientras haya un modal de reserva abierto */
+html[data-overlay="open"] .chat-fab {
+  opacity: 0;
+  pointer-events: none;
+}

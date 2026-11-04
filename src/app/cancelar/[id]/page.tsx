@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react'
-import { getBookingAsync, updateBookingEstadoAsync } from '@/lib/supabase-store'
-import { enviarCancelacion } from '@/lib/email'
 import { SERVICIOS } from '@/lib/constants'
-import type { Booking } from '@/lib/types'
+import type { ReservaPublica } from '@/lib/types'
+
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '34657332722'
 
 const MESES = [
   'enero','febrero','marzo','abril','mayo','junio',
@@ -27,29 +27,42 @@ function formatServicios(servicios: string[]): string {
 type Estado = 'cargando' | 'no-encontrada' | 'ya-cancelada' | 'completada' | 'fuera-plazo' | 'pendiente' | 'cancelada-ok'
 
 export default function CancelarPage({ params }: { params: { id: string } }) {
-  const [booking, setBooking] = useState<Booking | null>(null)
+  const [booking, setBooking] = useState<ReservaPublica | null>(null)
   const [estado, setEstado] = useState<Estado>('cargando')
   const [cancelando, setCancelando] = useState(false)
+  const [errorCancelar, setErrorCancelar] = useState<string | null>(null)
+  const [reembolsada, setReembolsada] = useState(false)
 
   useEffect(() => {
-    getBookingAsync(params.id).then((b) => {
-      if (!b) { setEstado('no-encontrada'); return }
-      setBooking(b)
-      if (b.estado === 'cancelada') { setEstado('ya-cancelada'); return }
-      if (b.estado === 'completada') { setEstado('completada'); return }
-      const citaDateTime = new Date(`${b.fecha}T${b.hora}:00`)
-      const horasRestantes = (citaDateTime.getTime() - Date.now()) / (1000 * 60 * 60)
-      setEstado(horasRestantes >= 24 ? 'pendiente' : 'fuera-plazo')
-    })
+    fetch(`/api/cancelar/${encodeURIComponent(params.id)}`)
+      .then(async (res) => {
+        if (!res.ok) { setEstado('no-encontrada'); return }
+        const { reserva, cancelable } = (await res.json()) as { reserva: ReservaPublica; cancelable: boolean }
+        setBooking(reserva)
+        if (reserva.estado === 'cancelada') { setEstado('ya-cancelada'); return }
+        if (reserva.estado === 'completada') { setEstado('completada'); return }
+        // El plazo de 24 h lo calcula el servidor en hora de Madrid
+        setEstado(cancelable ? 'pendiente' : 'fuera-plazo')
+      })
+      .catch(() => setEstado('no-encontrada'))
   }, [params.id])
 
   const confirmarCancelacion = async () => {
     if (!booking) return
     setCancelando(true)
-    await updateBookingEstadoAsync(booking.id, 'cancelada')
-    await enviarCancelacion(booking, true).catch(() => {})
-    setEstado('cancelada-ok')
-    setCancelando(false)
+    setErrorCancelar(null)
+    try {
+      const res = await fetch(`/api/cancelar/${encodeURIComponent(booking.id)}`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setErrorCancelar(data.error ?? 'No se pudo cancelar la cita. Inténtalo de nuevo o contáctanos.')
+        return
+      }
+      setReembolsada(data.reembolsada === true)
+      setEstado('cancelada-ok')
+    } finally {
+      setCancelando(false)
+    }
   }
 
   return (
@@ -119,7 +132,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
               </p>
               <div className="flex flex-col gap-2 w-full">
                 <a
-                  href="https://wa.me/34657332722?text=Hola, tengo una cita mañana y necesito cancelarla"
+                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hola, tengo una cita mañana y necesito cancelarla')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-3 text-white text-sm rounded-xl text-center transition-colors duration-200"
@@ -128,7 +141,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
                   Escribir por WhatsApp
                 </a>
                 <a
-                  href="tel:+34657332722"
+                  href={`tel:+${WHATSAPP_NUMBER}`}
                   className="w-full py-3 border border-accent text-center text-sm text-text-muted rounded-xl hover:border-black transition-colors"
                 >
                   Llamar al +34 657 33 27 22
@@ -150,6 +163,11 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
                   {formatFecha(booking.fecha)} · {booking.hora}
                 </p>
               </div>
+              {errorCancelar && (
+                <p className="text-sm text-center" style={{ color: 'var(--color-pomegranate)' }} role="alert">
+                  {errorCancelar}
+                </p>
+              )}
               <div className="flex flex-col gap-3">
                 <button
                   onClick={confirmarCancelacion}
@@ -178,6 +196,11 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
               <p className="text-sm text-text-muted leading-relaxed">
                 Tu cita del <strong>{formatFecha(booking.fecha)}</strong> ha sido cancelada correctamente.
               </p>
+              {reembolsada && (
+                <p className="text-sm text-text-muted leading-relaxed">
+                  Te devolveremos la señal de <strong>{booking.importePagado}€</strong> en tu método de pago en 5-10 días hábiles.
+                </p>
+              )}
               <a href="/#reservar" className="btn-primary text-xs mt-2">Reservar nueva cita</a>
             </div>
           )}

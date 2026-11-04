@@ -58,7 +58,7 @@ const schemaOrg = {
   name: 'D Bonita',
   url: 'https://dbonita.es',
   telephone: '+34657332722',
-  email: 'hola@dbonita.es',
+  email: 'dbonitadenia@gmail.com',
   image: 'https://dbonita.es/img/logo.png',
   description:
     'Centro de estética en Dénia especializado en lifting de pestañas, higienes faciales, manicura, pedicura y servicios corporales.',
@@ -78,9 +78,15 @@ const schemaOrg = {
   openingHoursSpecification: [
     {
       '@type': 'OpeningHoursSpecification',
-      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      dayOfWeek: ['Monday', 'Wednesday', 'Thursday'],
       opens: '10:00',
       closes: '19:00',
+    },
+    {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Tuesday', 'Friday'],
+      opens: '10:00',
+      closes: '18:00',
     },
   ],
   priceRange: '€€',

@@ -6,22 +6,27 @@ export type ConsentStatus = 'accepted' | 'rejected' | null
 
 interface ConsentCtx {
   consent: ConsentStatus
+  /** true once the saved choice has been read from localStorage */
+  loaded: boolean
   accept: () => void
   reject: () => void
 }
 
 const ConsentContext = createContext<ConsentCtx>({
   consent: null,
+  loaded: false,
   accept: () => {},
   reject: () => {},
 })
 
 export function CookieConsentProvider({ children }: { children: ReactNode }) {
   const [consent, setConsent] = useState<ConsentStatus>(null)
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     const saved = localStorage.getItem('dbonita_cookies_consent') as ConsentStatus | null
     if (saved === 'accepted' || saved === 'rejected') setConsent(saved)
+    setLoaded(true)
   }, [])
 
   const accept = () => {
@@ -35,7 +40,7 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ConsentContext.Provider value={{ consent, accept, reject }}>
+    <ConsentContext.Provider value={{ consent, loaded, accept, reject }}>
       {children}
     </ConsentContext.Provider>
   )

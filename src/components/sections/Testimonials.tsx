@@ -107,15 +107,20 @@ export default function Testimonials() {
                 <ChevronRight size={18} />
               </button>
 
-              <div className="flex gap-2 ml-2" role="tablist">
+              <div className="flex gap-0 ml-1" role="tablist">
                 {testimonios.map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setActual(i)}
                     role="tab" aria-selected={i === actual}
                     aria-label={`Ver testimonio ${i + 1}`}
-                    className={`h-2 rounded-pill transition-all duration-300 ${i === actual ? 'w-8 bg-black' : 'w-2 bg-accent'}`}
-                  />
+                    className="flex items-center justify-center min-h-[44px] px-1"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`block h-2 rounded-pill transition-all duration-300 ${i === actual ? 'w-8 bg-black' : 'w-2 bg-accent'}`}
+                    />
+                  </button>
                 ))}
               </div>
               <span className="font-mono text-xs text-text-muted ml-auto">{actual + 1} / {total}</span>

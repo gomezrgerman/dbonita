@@ -27,7 +27,7 @@ export default function About() {
           >
             <div className="overflow-hidden aspect-[4/5] rounded-feature shadow-clay">
               <Image
-                src="/img/diana-manicurista.png"
+                src="/img/diana-manicurista.webp"
                 alt="Diana — manicurista y fundadora de D Bonita en Dénia"
                 fill
                 className="object-cover object-top"
@@ -45,7 +45,7 @@ export default function About() {
               aria-label="Valoración 5.0 de 5 en Google"
             >
               <span className="font-sans text-3xl text-black leading-none" style={{ fontWeight: 800, letterSpacing: '-0.04em' }}>5.0</span>
-              <span className="label-upper text-black/60 mt-0.5" style={{ fontSize: '0.6rem' }}>{t.about.rating}</span>
+              <span className="label-upper text-black/60 mt-0.5" style={{ fontSize: '0.7rem' }}>{t.about.rating}</span>
             </motion.div>
           </motion.div>
 
@@ -112,7 +112,7 @@ export default function About() {
                   <span className="font-sans text-2xl md:text-3xl text-lemon block" style={{ fontWeight: 800, letterSpacing: '-0.04em' }}>
                     {stat.valor}
                   </span>
-                  <span className="label-upper mt-0.5 md:mt-1 block" style={{ color: 'var(--color-text-muted)', fontSize: '0.6rem' }}>
+                  <span className="label-upper mt-0.5 md:mt-1 block" style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>
                     {t.about.stats[i]}
                   </span>
                 </div>

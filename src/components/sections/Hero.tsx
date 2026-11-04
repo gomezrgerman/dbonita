@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import Script from 'next/script'
 import { useLang } from '@/lib/i18n'
@@ -8,7 +8,7 @@ import { useCookieConsent } from '@/lib/cookie-consent'
 
 declare global {
   interface Window {
-    UnicornStudio?: { init: () => void; isInitialized: boolean }
+    UnicornStudio?: { init: () => Promise<unknown> | void; isInitialized: boolean }
   }
 }
 
@@ -25,11 +25,31 @@ type DOEWithPermission = typeof DeviceOrientationEvent & {
 }
 
 const MAX_PX = 20  // máximo desplazamiento en píxeles
+const SCENE_PINK = '#ffb8cb'  // color de fondo de la escena de UnicornStudio
+const FADE_MS = 800
 
 export default function Hero() {
   const bgRef = useRef<HTMLDivElement>(null)
   const { t } = useLang()
-  const { consent } = useCookieConsent()
+  const { consent, loaded } = useCookieConsent()
+  // Animación lista para mostrarse (UnicornStudio.init() resuelto)
+  const [animReady, setAnimReady] = useState(false)
+  // Si ya había aceptado cookies en una visita anterior, no mostramos la imagen
+  // fija: solo el rosa de fondo y luego el fundido de la animación.
+  const [acceptedOnLoad, setAcceptedOnLoad] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    if (loaded && acceptedOnLoad === null) setAcceptedOnLoad(consent === 'accepted')
+  }, [loaded, consent, acceptedOnLoad])
+
+  const showStatic = loaded && acceptedOnLoad === false
+
+  const initAnimation = () => {
+    const us = window.UnicornStudio
+    if (!us) return
+    const reveal = () => window.setTimeout(() => setAnimReady(true), 250)
+    Promise.resolve(us.init()).then(reveal, reveal)
+  }
 
   const reservar = () => {
     document.getElementById('servicios')?.scrollIntoView({ behavior: 'smooth' })
@@ -97,11 +117,9 @@ export default function Hero() {
   return (
     <section
       id="inicio"
-      className="relative min-h-screen flex items-end overflow-hidden bg-black"
+      className="relative min-h-screen flex items-end overflow-hidden"
       aria-label="Sección principal"
-      style={consent !== 'accepted' ? {
-        background: 'radial-gradient(ellipse at 25% 70%, #1e0a3c 0%, #0d0d1a 45%, #000 100%)',
-      } : undefined}
+      style={{ background: SCENE_PINK }}
     >
       {/*
         Wrapper sobredimensionado: MAX_PX px de margen en cada lado.
@@ -119,18 +137,41 @@ export default function Hero() {
         }}
       >
         {/*
+          Imagen fija de respaldo: captura de la escena con la misma geometría
+          que el canvas (wrapper +MAX_PX por lado), una por tamaño de pantalla
+          habitual. Solo para quien no ha aceptado cookies antes de entrar; si
+          acepta ahora, la animación aparece encima con un fundido.
+        */}
+        <picture
+          className="absolute inset-0 transition-opacity duration-300"
+          style={{ opacity: showStatic ? 1 : 0 }}
+        >
+          <source media="(min-width: 768px) and (min-aspect-ratio: 16/9)" srcSet="/img/hero-fallback-1920.webp" />
+          <source media="(min-width: 768px)" srcSet="/img/hero-fallback-1440.webp" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/img/hero-fallback-mobile.webp"
+            alt=""
+            fetchPriority="high"
+            decoding="async"
+            className="w-full h-full object-cover"
+          />
+        </picture>
+
+        {/*
           Mobile: pointer-events none → UnicornStudio no recibe eventos táctiles
           propios (que eran los que movían el canvas y mostraban bordes).
           Nosotros aplicamos el desplazamiento vía CSS transform en el wrapper.
         */}
         <div
-          className="md:hidden absolute inset-0"
-          style={{ pointerEvents: 'none' }}
+          className="md:hidden absolute inset-0 transition-opacity"
+          style={{ pointerEvents: 'none', opacity: animReady ? 1 : 0, transitionDuration: `${FADE_MS}ms` }}
           data-us-project="0z4NtvQtWlhYgpvjWpTQ"
         />
         {/* Desktop: comportamiento original sin cambios */}
         <div
-          className="hidden md:block absolute inset-0"
+          className="hidden md:block absolute inset-0 transition-opacity"
+          style={{ opacity: animReady ? 1 : 0, transitionDuration: `${FADE_MS}ms` }}
           data-us-project="0z4NtvQtWlhYgpvjWpTQ"
         />
       </div>
@@ -216,7 +257,7 @@ export default function Hero() {
         <Script
           src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.12/dist/unicornStudio.umd.js"
           strategy="afterInteractive"
-          onLoad={() => { window.UnicornStudio?.init() }}
+          onReady={initAnimation}
         />
       )}
     </section>
