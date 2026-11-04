@@ -208,3 +208,12 @@ html[data-overlay="open"] .chat-fab {
   opacity: 0;
   pointer-events: none;
 }
+
+/* iOS Safari amplía la página al enfocar campos con letra < 16px */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

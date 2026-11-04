@@ -250,6 +250,25 @@ function PagoForm({ form, clientSecret, onExito, tPayment }: PagoFormProps) {
   )
 }
 
+// Familia de cada servicio, para detectar carritos que mezclan tipos de tratamiento
+const FAMILIAS: Record<string, string> = {
+  manicura: 'unas', 'manicura-dbonita': 'unas', 'manicura-renaissance': 'unas',
+  'manicura-renaissance-semi': 'unas', retirado: 'unas',
+  'extension-soft-gel': 'unas', 'extension-gel': 'unas',
+  'pedicura-renaissance': 'unas', 'pedicura-renaissance-semi': 'unas',
+  francesa: 'unas', 'decoracion-basica': 'unas', 'decoracion-elaborada': 'unas',
+  'ingles-cera': 'depilacion', 'pierna-completa-cera': 'depilacion',
+  'medias-piernas-cera': 'depilacion', 'axilas-cera': 'depilacion',
+  'cejas-cera': 'depilacion', 'bigote-cera': 'depilacion',
+  'cejas-hilo': 'depilacion', 'labio-hilo': 'depilacion', brazos: 'depilacion',
+  'lifting-pestanas': 'cara', 'laminado-cejas': 'cara',
+  'tinte-cejas': 'cara', 'tinte-pestanas': 'cara',
+  'higiene-facial': 'facial', radiofrecuencia: 'facial', detox: 'facial',
+  'vitamina-c': 'facial', 'glow-skin': 'facial', 'skin-balance': 'facial', dermapen: 'facial',
+  maderoterapia: 'corporal', 'drenaje-linfatico': 'corporal',
+  'corporal-personalizado': 'corporal',
+}
+
 export default function Booking() {
   const { t, lang } = useLang()
   const cal = t.booking.calendar
@@ -306,23 +325,6 @@ export default function Booking() {
 
   // Familias de servicios que no tiene sentido cruzar entre sí.
   // Si el carrito mezcla 2+ familias distintas, el modal de venta cruzada se omite.
-  const FAMILIAS: Record<string, string> = {
-    manicura: 'unas', 'manicura-dbonita': 'unas', 'manicura-renaissance': 'unas',
-    'manicura-renaissance-semi': 'unas', retirado: 'unas',
-    'extension-soft-gel': 'unas', 'extension-gel': 'unas',
-    'pedicura-renaissance': 'unas', 'pedicura-renaissance-semi': 'unas',
-    francesa: 'unas', 'decoracion-basica': 'unas', 'decoracion-elaborada': 'unas',
-    'ingles-cera': 'depilacion', 'pierna-completa-cera': 'depilacion',
-    'medias-piernas-cera': 'depilacion', 'axilas-cera': 'depilacion',
-    'cejas-cera': 'depilacion', 'bigote-cera': 'depilacion',
-    'cejas-hilo': 'depilacion', 'labio-hilo': 'depilacion', brazos: 'depilacion',
-    'lifting-pestanas': 'cara', 'laminado-cejas': 'cara',
-    'tinte-cejas': 'cara', 'tinte-pestanas': 'cara',
-    'higiene-facial': 'facial', radiofrecuencia: 'facial', detox: 'facial',
-    'vitamina-c': 'facial', 'glow-skin': 'facial', 'skin-balance': 'facial', dermapen: 'facial',
-    maderoterapia: 'corporal', 'drenaje-linfatico': 'corporal',
-    'corporal-personalizado': 'corporal',
-  }
 
   const carritoMezclado = useMemo(() => {
     const familias = new Set(carrito.map((id) => FAMILIAS[id]).filter(Boolean))
@@ -1040,7 +1042,7 @@ export default function Booking() {
                       value={form.nombre}
                       onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
                       placeholder={t.booking.form.namePlaceholder}
-                      className="w-full px-4 py-3 rounded-card border border-accent bg-white text-sm text-black placeholder:text-text-muted/50 focus:outline-none transition-colors duration-200"
+                      className="w-full px-4 py-3 rounded-card border border-accent bg-white text-base md:text-sm text-black placeholder:text-text-muted/50 focus:outline-none transition-colors duration-200"
                       style={{ fontWeight: 400, boxShadow: 'var(--shadow-clay)' }}
                       onFocus={(e) => { e.currentTarget.style.borderColor = '#000' }}
                       onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-accent)' }}
@@ -1053,7 +1055,7 @@ export default function Booking() {
                       value={form.telefono}
                       onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))}
                       placeholder="+34 600 000 000"
-                      className="w-full px-4 py-3 rounded-card border border-accent bg-white text-sm text-black placeholder:text-text-muted/50 focus:outline-none transition-colors duration-200"
+                      className="w-full px-4 py-3 rounded-card border border-accent bg-white text-base md:text-sm text-black placeholder:text-text-muted/50 focus:outline-none transition-colors duration-200"
                       style={{ fontWeight: 400, boxShadow: 'var(--shadow-clay)' }}
                       onFocus={(e) => { e.currentTarget.style.borderColor = '#000' }}
                       onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-accent)' }}
@@ -1069,8 +1071,8 @@ export default function Booking() {
                     id="email" type="email" required
                     value={form.email}
                     onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                    placeholder="your@email.com"
-                    className="w-full px-4 py-3 rounded-card border border-accent bg-white text-sm text-black placeholder:text-text-muted/50 focus:outline-none transition-colors duration-200"
+                    placeholder={t.booking.form.emailPlaceholder}
+                    className="w-full px-4 py-3 rounded-card border border-accent bg-white text-base md:text-sm text-black placeholder:text-text-muted/50 focus:outline-none transition-colors duration-200"
                     style={{ fontWeight: 400, boxShadow: 'var(--shadow-clay)' }}
                     onFocus={(e) => { e.currentTarget.style.borderColor = '#000' }}
                     onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-accent)' }}
@@ -1086,7 +1088,7 @@ export default function Booking() {
                     value={form.notas}
                     onChange={(e) => setForm((f) => ({ ...f, notas: e.target.value }))}
                     placeholder={t.booking.form.notesPlaceholder}
-                    className="w-full px-4 py-3 rounded-card border border-accent bg-white text-sm text-black placeholder:text-text-muted/50 focus:outline-none transition-colors duration-200 resize-none"
+                    className="w-full px-4 py-3 rounded-card border border-accent bg-white text-base md:text-sm text-black placeholder:text-text-muted/50 focus:outline-none transition-colors duration-200 resize-none"
                     style={{ fontWeight: 400, boxShadow: 'var(--shadow-clay)' }}
                     onFocus={(e) => { e.currentTarget.style.borderColor = '#000' }}
                     onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-accent)' }}

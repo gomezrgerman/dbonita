@@ -37,7 +37,7 @@ export default function Chatbot() {
       }, 600)
       return () => clearTimeout(timer)
     }
-  }, [open])
+  }, [open, messages.length])
 
   useEffect(() => {
     if (scrollRef.current) {
