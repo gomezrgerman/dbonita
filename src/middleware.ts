@@ -65,6 +65,9 @@ export async function middleware(request: NextRequest) {
   // Las rutas API nunca se bloquean por SITE_ENABLED
   if (pathname.startsWith('/api/')) return NextResponse.next()
 
+  // Imagen de vista previa para redes sociales: pública también en "Próximamente"
+  if (pathname === '/opengraph-image') return NextResponse.next()
+
   // SITE_ENABLED gate para el sitio público
   if (process.env.SITE_ENABLED === 'true') return NextResponse.next()
 

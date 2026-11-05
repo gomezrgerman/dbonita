@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { confirmarReservaDesdePago, getStripe } from '@/lib/stripe-server'
+import { confirmarReservaDesdePago, getStripe, HorarioOcupadoError } from '@/lib/stripe-server'
 import { toReservaPublica } from '@/lib/supabase-store'
 
 // Vuelta del pago en el navegador (con o sin redirección de Stripe).
@@ -32,6 +32,9 @@ export async function POST(req: Request) {
     const booking = await confirmarReservaDesdePago(pi)
     return NextResponse.json({ reserva: toReservaPublica(booking) })
   } catch (err) {
+    if (err instanceof HorarioOcupadoError) {
+      return NextResponse.json({ error: err.message }, { status: 409 })
+    }
     console.error('reserva confirmar:', err instanceof Error ? err.message : err)
     return NextResponse.json({ error: 'No se pudo guardar la reserva' }, { status: 500 })
   }

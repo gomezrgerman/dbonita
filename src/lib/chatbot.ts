@@ -1,4 +1,5 @@
 import { SERVICIOS, CATEGORIAS_SERVICIOS, PREGUNTAS_FAQ } from './constants'
+import { RESERVAS_ONLINE } from './reservas-modo'
 
 export interface ChatResponse {
   text: string
@@ -70,22 +71,30 @@ const KNOWLEDGE: KnowledgeEntry[] = [
   },
   {
     keywords: ['reservar', 'reserva', 'cita', 'turno', 'horario', 'hora', 'agendar', 'appointment', 'booking'],
-    response: `Reservar tu cita es muy fácil:\n\n1️⃣ Ve a la sección **"Reserva tu cita"** en la web\n2️⃣ Selecciona los servicios que quieras\n3️⃣ Elige la fecha y hora disponibles\n4️⃣ Rellena tus datos y confirma\n\nSe requiere una **señal de 10€** para confirmar. La cancelación es gratuita hasta 24h antes.\n\n¿Quieres que te lleve directo a la reserva?`,
-    quickReplies: ['Ir a reservar', '¿Cuánto cuesta la señal?', '¿Puedo cancelar?'],
+    response: RESERVAS_ONLINE
+      ? `Reservar tu cita es muy fácil:\n\n1️⃣ Ve a la sección **"Reserva tu cita"** en la web\n2️⃣ Selecciona los servicios que quieras\n3️⃣ Elige la fecha y hora disponibles\n4️⃣ Rellena tus datos y confirma\n\nSe requiere una **señal de 10€** para confirmar. La cancelación es gratuita hasta 24h antes.\n\n¿Quieres que te lleve directo a la reserva?`
+      : `Reservar tu cita es muy fácil:\n\n1️⃣ Ve a la sección **"Reserva tu cita"** en la web\n2️⃣ Selecciona los servicios que quieras\n3️⃣ Pulsa **"Enviar solicitud por WhatsApp"**\n\nTe contestamos con los días y horas libres y confirmamos tu cita. El pago se hace en el centro.\n\n¿Quieres que te lleve a la reserva?`,
+    quickReplies: RESERVAS_ONLINE
+      ? ['Ir a reservar', '¿Cuánto cuesta la señal?', '¿Puedo cancelar?']
+      : ['Ir a reservar', '¿Puedo cancelar?', '¿Dónde estáis ubicados?'],
   },
   {
     keywords: ['horario', 'horarios', 'cuando', 'que dias', 'abri', 'abierto', 'atendeis', 'horario de apertura', 'apertura'],
-    response: `Nuestro horario es:\n\n📅 **Lunes, miércoles y jueves**: 10:00 – 19:00\n📅 **Martes y viernes**: 10:00 – 18:00\n📅 **Sábados y domingos**: Cerrado\n\nPuedes reservar tu cita directamente desde la web en cualquier momento.`,
+    response: `Nuestro horario es:\n\n📅 **Lunes, miércoles y jueves**: 10:00 – 19:00\n📅 **Martes y viernes**: 10:00 – 18:00\n📅 **Sábados y domingos**: Cerrado\n\n${RESERVAS_ONLINE ? 'Puedes reservar tu cita directamente desde la web en cualquier momento.' : 'Puedes pedir tu cita desde la web y te contestamos por WhatsApp.'}`,
     quickReplies: ['Quiero reservar cita', '¿Dónde estáis ubicados?'],
   },
   {
     keywords: ['cancelar', 'cancelacion', 'anular', 'devolucion', 'reembolso', 'señal', 'deposito', 'dinero'],
-    response: `Política de cancelación:\n\n✅ **Cancelación gratuita** hasta 24 horas antes de la cita\n❌ **Menos de 24h**: la señal no es reembolsable\n\nPara cancelar, usa el enlace que recibes en tu email de confirmación.\n\nSi tienes un imprevisto, llámanos directamente.`,
-    quickReplies: ['¿Cuánto es la señal?', 'Necesito cancelar mi cita', 'Quiero reservar'],
+    response: RESERVAS_ONLINE
+      ? `Política de cancelación:\n\n✅ **Cancelación gratuita** hasta 24 horas antes de la cita\n❌ **Menos de 24h**: la señal no es reembolsable\n\nPara cancelar, usa el enlace que recibes en tu email de confirmación.\n\nSi tienes un imprevisto, llámanos directamente.`
+      : `Política de cancelación:\n\n✅ Si no puedes venir, avísanos con **al menos 24 horas** de antelación\n📲 Puedes hacerlo por WhatsApp o por teléfono\n\nAsí otra clienta puede aprovechar ese hueco. ¡Gracias!`,
+    quickReplies: RESERVAS_ONLINE
+      ? ['¿Cuánto es la señal?', 'Necesito cancelar mi cita', 'Quiero reservar']
+      : ['Necesito cancelar mi cita', 'Quiero reservar'],
   },
   {
     keywords: ['duracion', 'cuanto dura', 'cuanto tiempo', 'tardo', 'tiempo'],
-    response: `La duración depende del tratamiento:\n\n• Manicura — 30-90 min\n• Lifting de Pestañas — 90 min\n• Laminado de Cejas — 60 min\n• Faciales — 45-90 min\n• Pedicura — 45-60 min\n• Maderoterapia — 90 min\n\nSi combinas servicios, se suman las duraciones. El sistema calcula automáticamente el tiempo total al reservar.`,
+    response: `La duración depende del tratamiento:\n\n• Manicura — 30-90 min\n• Lifting de Pestañas — 90 min\n• Laminado de Cejas — 60 min\n• Faciales — 45-90 min\n• Pedicura — 45-60 min\n• Maderoterapia — 90 min\n\nSi combinas servicios, se suman las duraciones. ${RESERVAS_ONLINE ? 'El sistema calcula automáticamente el tiempo total al reservar.' : 'Al elegir tus servicios en la web verás el tiempo total.'}`,
     quickReplies: ['¿Puedo combinar tratamientos?', 'Quiero reservar'],
   },
   {
@@ -115,7 +124,7 @@ const KNOWLEDGE: KnowledgeEntry[] = [
   },
   {
     keywords: ['whatsapp', 'telefono', 'llamar', 'contacto', 'contactar', 'hablar', 'persona'],
-    response: `Puedes contactarnos por **WhatsApp** para cualquier consulta. Te responderemos lo antes posible.\n\nTambién puedes reservar directamente desde esta web — es rápido y seguro.`,
+    response: `Puedes contactarnos por **WhatsApp** para cualquier consulta. Te responderemos lo antes posible.\n\n${RESERVAS_ONLINE ? 'También puedes reservar directamente desde esta web — es rápido y seguro.' : 'También puedes elegir tus tratamientos en la web y enviarnos la solicitud.'}`,
     quickReplies: ['Ir a reservar', '¿Cuáles son los precios?'],
   },
 ]

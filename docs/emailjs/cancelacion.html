@@ -1,0 +1,28 @@
+<!--
+  Plantilla EmailJS: CANCELACION (a la clienta)
+    To Email:  {{to_email}}
+    From Name: D Bonita
+    Reply To:  dbonitadenia@gmail.com
+    Subject:   Tu cita en D Bonita ha sido cancelada
+  El ID de la plantilla va en la variable EMAILJS_TEMPLATE_CANCELACION.
+-->
+<div style="margin:0;padding:24px;background:#faf7f4;font-family:Arial,Helvetica,sans-serif;color:#2c2420">
+  <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:32px;border:1px solid #e8d5c0">
+    <p style="margin:0 0 4px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#8a7060">D Bonita &middot; Denia</p>
+    <h1 style="margin:0 0 20px;font-size:24px;color:#000">Hola {{to_name}}, tu cita se ha cancelado</h1>
+
+    <table style="width:100%;border-collapse:collapse;font-size:15px">
+      <tr><td style="padding:8px 0;color:#8a7060">Tratamiento</td><td style="padding:8px 0;text-align:right"><strong>{{servicio}}</strong></td></tr>
+      <tr><td style="padding:8px 0;color:#8a7060">Fecha</td><td style="padding:8px 0;text-align:right"><strong>{{fecha}}</strong></td></tr>
+      <tr><td style="padding:8px 0;color:#8a7060">Hora</td><td style="padding:8px 0;text-align:right"><strong>{{hora}}</strong></td></tr>
+    </table>
+
+    <p style="margin:24px 0;font-size:14px;line-height:1.6">{{reembolso}}</p>
+
+    <a href="https://www.dbonita.es/#servicios" style="display:inline-block;padding:12px 20px;border-radius:10px;background:#000;color:#fff;text-decoration:none;font-size:14px">Reservar otra cita</a>
+
+    <p style="margin:28px 0 0;font-size:13px;color:#8a7060">
+      Dudas: WhatsApp <a href="https://wa.me/34657332722" style="color:#2c2420">+34 657 33 27 22</a>
+    </p>
+  </div>
+</div>
