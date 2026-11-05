@@ -81,6 +81,12 @@ describe('plantillaCancelacion', () => {
     expect(plantillaCancelacion(reserva, true).html).toContain('Se te devolverán 10€')
   })
 
+  it('si cancela el centro sin devolver, no culpa a la clienta del plazo', () => {
+    const html = plantillaCancelacion(reserva, false, true).html
+    expect(html).toContain('Desde D Bonita hemos cancelado')
+    expect(html).not.toContain('no es reembolsable')
+  })
+
   it('indica que la señal no se devuelve sin reembolso', () => {
     expect(plantillaCancelacion(reserva, false).html).toContain('no es reembolsable')
   })

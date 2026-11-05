@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { SERVICIOS } from '@/lib/constants'
 import { fechaValida } from '@/lib/reservas-reglas'
-import { createBookingAsync, getBookingsAsync, updateBookingEstadoAsync } from '@/lib/supabase-store'
+import { createBookingAsync, getBookingAsync, getBookingsAsync, updateBookingEstadoAsync } from '@/lib/supabase-store'
+import { cancelarReserva, ReembolsoError } from '@/lib/cancelacion'
 import type { EstadoCita } from '@/lib/types'
 
 // Protegido por middleware (cookie del panel) — ver src/middleware.ts
@@ -49,10 +50,33 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   try {
-    const { id, estado } = await req.json()
+    const { id, estado, reembolsar, avisar } = await req.json()
     if (typeof id !== 'string' || !ESTADOS.includes(estado)) {
       return NextResponse.json({ error: 'Datos no válidos' }, { status: 400 })
     }
+
+    // Cancelar desde el panel: opcionalmente devuelve la señal y avisa a la clienta
+    if (estado === 'cancelada') {
+      const actual = await getBookingAsync(id)
+      if (!actual) return NextResponse.json({ error: 'No encontrada' }, { status: 404 })
+      if (actual.estado === 'cancelada') return NextResponse.json(actual)
+      try {
+        const { reserva } = await cancelarReserva(actual, {
+          reembolsar: reembolsar === true,
+          avisar: avisar === true,
+          porCentro: true,
+        })
+        return NextResponse.json(reserva)
+      } catch (err) {
+        if (!(err instanceof ReembolsoError)) throw err
+        console.error('panel: error en reembolso:', err.cause)
+        return NextResponse.json(
+          { error: 'Stripe no pudo devolver la señal. La cita sigue activa; inténtalo de nuevo.' },
+          { status: 502 }
+        )
+      }
+    }
+
     const booking = await updateBookingEstadoAsync(id, estado)
     if (!booking) return NextResponse.json({ error: 'No encontrada' }, { status: 404 })
     return NextResponse.json(booking)

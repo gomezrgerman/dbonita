@@ -194,17 +194,21 @@ export function plantillaNegocio(b: Booking): EmailContenido {
   return { subject: lineaUnica(`Nueva reserva: ${b.clienteNombre} - ${fecha} ${b.hora}`), html, text }
 }
 
-export function plantillaCancelacion(b: Booking, reembolso: boolean): EmailContenido {
+export function plantillaCancelacion(b: Booking, reembolso: boolean, porCentro = false): EmailContenido {
   const fecha = formatFecha(b.fecha)
   const servicio = nombresServicios(b.servicios)
   const nombre = escaparHtml(primerNombre(b.clienteNombre))
+  const sinPago = !(b.importePagado > 0)
   const mensaje = reembolso
     ? `Se te devolverán ${b.importePagado}€ en 5-10 días hábiles.`
-    : `La señal de ${b.importePagado}€ no es reembolsable por cancelación con menos de 24 horas de antelación.`
+    : porCentro || sinPago
+      ? 'Si tienes cualquier duda, escríbenos por WhatsApp y lo hablamos.'
+      : `La señal de ${b.importePagado}€ no es reembolsable por cancelación con menos de 24 horas de antelación.`
+  const intro = porCentro ? 'Desde D Bonita hemos cancelado esta cita:' : 'Esta era la cita:'
 
   const html = marco(`${etiqueta('Estudio de belleza · Dénia')}
       ${titulo(`Hola ${nombre}, tu cita se ha`, 'cancelado')}
-      <p style="margin:0 0 22px;font-size:14px;color:${C.grisOscuro}">Esta era la cita:</p>
+      <p style="margin:0 0 22px;font-size:14px;color:${C.grisOscuro}">${intro}</p>
       ${resumen([
         ['Tratamiento', servicio],
         ['Fecha', fecha],

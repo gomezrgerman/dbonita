@@ -13,6 +13,8 @@ import {
 } from '@/lib/panel-api'
 import { SERVICIOS } from '@/lib/constants'
 import type { Booking, Cliente, SlotBloqueado, EstadoCita } from '@/lib/types'
+import { esCancelableConReembolso } from '@/lib/reservas-reglas'
+import type { OpcionesCancelarPanel } from '@/lib/panel-api'
 
 const MESES = [
   'Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -52,14 +54,33 @@ const ESTADO_LABEL: Record<EstadoCita, string> = {
 // ─── Diálogo de confirmación para cancelar ────────────────
 interface ConfirmCancelDialogProps {
   booking: Booking
-  onConfirm: () => void
+  onConfirm: (opciones: OpcionesCancelarPanel) => Promise<void>
   onCerrar: () => void
 }
 
 function ConfirmCancelDialog({ booking, onConfirm, onCerrar }: ConfirmCancelDialogProps) {
-  const tienePago = booking.importePagado > 0
+  const pagoOnline = booking.pagado && booking.importePagado > 0 && !!booking.stripePaymentIntentId
+  const pagoManual = booking.importePagado > 0 && !pagoOnline
+  const conAntelacion = esCancelableConReembolso(booking.fecha, booking.hora)
+  // Por defecto: devolver si quedan 24 h o más (misma regla que si cancela la clienta)
+  const [reembolsar, setReembolsar] = useState(pagoOnline && conAntelacion)
+  const [avisar, setAvisar] = useState(!!booking.clienteEmail)
+  const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const confirmar = async () => {
+    setEnviando(true)
+    setError(null)
+    try {
+      await onConfirm({ reembolsar: pagoOnline && reembolsar, avisar })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo cancelar la cita')
+      setEnviando(false)
+    }
+  }
+
   return (
-    <div className="fixed inset-0 bg-text/50 z-50 flex items-center justify-center px-4" onClick={onCerrar}>
+    <div className="fixed inset-0 bg-text/50 z-50 flex items-center justify-center px-4" onClick={enviando ? undefined : onCerrar}>
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
         className="bg-white w-full max-w-sm p-6 flex flex-col gap-4"
@@ -74,33 +95,53 @@ function ConfirmCancelDialog({ booking, onConfirm, onCerrar }: ConfirmCancelDial
           <strong className="text-text font-medium">{booking.clienteNombre}</strong> el{' '}
           {formatFecha(booking.fecha)} a las {booking.hora}?
         </p>
-        {tienePago && (
-          <div className="bg-orange-50 border border-orange-200 p-4 flex flex-col gap-1">
+
+        {pagoOnline && (
+          <fieldset className="bg-orange-50 border border-orange-200 p-4 flex flex-col gap-2">
+            <legend className="sr-only">Señal</legend>
             <p className="font-sans text-xs font-medium text-orange-700">
-              Esta clienta pagó {booking.importePagado}€ de señal
+              Esta clienta pagó {booking.importePagado}€ de señal con tarjeta
             </p>
-            <p className="font-sans text-xs font-light text-orange-600 leading-relaxed">
-              El reembolso no es automático. Si corresponde, procésalo manualmente desde tu{' '}
-              <a
-                href="https://dashboard.stripe.com/payments"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2 font-medium"
-              >
-                cuenta de Stripe
-              </a>.
-            </p>
-          </div>
+            <label className="flex items-center gap-2 font-sans text-sm text-text cursor-pointer min-h-[32px]">
+              <input type="radio" name="reembolso" checked={reembolsar} onChange={() => setReembolsar(true)} />
+              Devolver los {booking.importePagado}€
+            </label>
+            <label className="flex items-center gap-2 font-sans text-sm text-text cursor-pointer min-h-[32px]">
+              <input type="radio" name="reembolso" checked={!reembolsar} onChange={() => setReembolsar(false)} />
+              No devolver
+            </label>
+            {!conAntelacion && (
+              <p className="font-sans text-xs font-light text-orange-600">Faltan menos de 24 h: según la política, la señal no se devuelve.</p>
+            )}
+          </fieldset>
         )}
+
+        {pagoManual && (
+          <p className="bg-orange-50 border border-orange-200 p-3 font-sans text-xs font-light text-orange-700">
+            Esta cita se pagó fuera de la web ({booking.importePagado}€). Si corresponde devolverlo, hazlo a mano.
+          </p>
+        )}
+
+        {booking.clienteEmail && (
+          <label className="flex items-center gap-2 font-sans text-sm text-text cursor-pointer min-h-[32px]">
+            <input type="checkbox" checked={avisar} onChange={(e) => setAvisar(e.target.checked)} />
+            Enviar email de cancelación a la clienta
+          </label>
+        )}
+
+        {error && <p className="font-sans text-xs text-red-600" role="alert">{error}</p>}
+
         <div className="flex gap-3 pt-1">
           <button
-            onClick={onConfirm}
-            className="flex-1 py-2.5 bg-red-500 text-white font-sans text-xs font-light tracking-widest uppercase hover:bg-red-600 transition-colors"
+            onClick={confirmar}
+            disabled={enviando}
+            className="flex-1 py-2.5 bg-red-500 text-white font-sans text-xs font-light tracking-widest uppercase hover:bg-red-600 transition-colors disabled:opacity-60"
           >
-            Sí, cancelar
+            {enviando ? 'Cancelando…' : 'Sí, cancelar'}
           </button>
           <button
             onClick={onCerrar}
+            disabled={enviando}
             className="px-5 py-2.5 border border-accent font-sans text-xs font-light text-text-muted hover:border-primary hover:text-primary transition-colors"
           >
             Volver
@@ -474,9 +515,11 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
         {confirmCancel && (
           <ConfirmCancelDialog
             booking={confirmCancel}
-            onConfirm={() => {
-              cambiarEstado(confirmCancel.id, 'cancelada')
+            onConfirm={async (opciones) => {
+              await actualizarEstado(confirmCancel.id, 'cancelada', opciones)
               setConfirmCancel(null)
+              await cargar()
+              onRefresh()
             }}
             onCerrar={() => setConfirmCancel(null)}
           />

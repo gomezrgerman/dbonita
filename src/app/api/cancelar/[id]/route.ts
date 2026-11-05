@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { esCancelableConReembolso } from '@/lib/reservas-reglas'
-import { getBookingAsync, toReservaPublica, updateBookingEstadoAsync } from '@/lib/supabase-store'
-import { enviarCancelacion } from '@/lib/email-server'
-import { getStripe } from '@/lib/stripe-server'
+import { getBookingAsync, toReservaPublica } from '@/lib/supabase-store'
+import { cancelarReserva, ReembolsoError } from '@/lib/cancelacion'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -38,29 +37,21 @@ export async function POST(_req: Request, { params }: Params) {
       return NextResponse.json({ error: 'Fuera de plazo de cancelación' }, { status: 409 })
     }
 
-    const reembolsar = booking.pagado && booking.importePagado > 0 && !!booking.stripePaymentIntentId
-    if (reembolsar) {
-      try {
-        await getStripe().refunds.create(
-          { payment_intent: booking.stripePaymentIntentId! },
-          { idempotencyKey: `reembolso-${booking.id}` }
-        )
-      } catch (err) {
-        const code = (err as { code?: string }).code
-        if (code !== 'charge_already_refunded') {
-          console.error('cancelar: error en reembolso:', err)
-          return NextResponse.json(
-            { error: 'No se pudo procesar el reembolso. Contáctanos y lo resolvemos.' },
-            { status: 502 }
-          )
-        }
-      }
+    try {
+      const { reserva, reembolsada } = await cancelarReserva(booking, {
+        reembolsar: true,
+        avisar: true,
+        porCentro: false,
+      })
+      return NextResponse.json({ reserva: toReservaPublica(reserva), reembolsada })
+    } catch (err) {
+      if (!(err instanceof ReembolsoError)) throw err
+      console.error('cancelar: error en reembolso:', err.cause)
+      return NextResponse.json(
+        { error: 'No se pudo procesar el reembolso. Contáctanos y lo resolvemos.' },
+        { status: 502 }
+      )
     }
-
-    const actualizada = await updateBookingEstadoAsync(booking.id, 'cancelada')
-    await enviarCancelacion(booking, reembolsar).catch((err) => console.error('cancelar: email:', err))
-
-    return NextResponse.json({ reserva: toReservaPublica(actualizada ?? booking), reembolsada: reembolsar })
   } catch (err) {
     console.error('cancelar POST:', err)
     return NextResponse.json({ error: 'No se pudo cancelar la reserva' }, { status: 500 })
