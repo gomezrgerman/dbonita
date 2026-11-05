@@ -1,40 +1,51 @@
-// Envío de emails vía API REST de EmailJS. SOLO servidor.
-// En EmailJS → Account → Security hay que activar "Allow EmailJS API for non-browser applications".
-import { SERVICIOS } from './constants'
+// Envío de emails con la API de Resend (https://resend.com). SOLO servidor.
+// Variables: RESEND_API_KEY (obligatoria), EMAIL_FROM, EMAIL_REPLY_TO, EMAIL_NEGOCIO.
+// Si falta RESEND_API_KEY el email se omite sin romper la reserva.
 import type { Booking } from './types'
+import {
+  plantillaCancelacion,
+  plantillaConfirmacion,
+  plantillaNegocio,
+  type EmailContenido,
+} from './email-plantillas'
 
-const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
+const FROM_DEFECTO = 'D Bonita <reservas@dbonita.es>'
+const REPLY_TO_DEFECTO = 'dbonitadenia@gmail.com'
 
-function formatFecha(fecha: string): string {
-  const [y, m, d] = fecha.split('-')
-  return `${parseInt(d)} de ${MESES[parseInt(m) - 1]} de ${y}`
+interface Envio {
+  to: string
+  replyTo: string
+  contenido: EmailContenido
+  /** Evita duplicados si el webhook y el navegador confirman a la vez */
+  idempotencyKey: string
 }
 
-function resolverNombres(ids: string[]): string {
-  return ids.map((id) => SERVICIOS.find((s) => s.id === id)?.nombre ?? id).join(', ')
-}
-
-async function sendViaEmailJS(templateId: string | undefined, params: Record<string, string>): Promise<void> {
-  const serviceId = process.env.EMAILJS_SERVICE_ID
-  const publicKey = process.env.EMAILJS_PUBLIC_KEY
-  if (!serviceId || !templateId || !publicKey) {
-    console.warn('[email] EmailJS no configurado — email omitido')
+async function enviar({ to, replyTo, contenido, idempotencyKey }: Envio): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    console.warn('[email] RESEND_API_KEY no configurada: email omitido')
     return
   }
-  const res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      service_id: serviceId,
-      template_id: templateId,
-      user_id: publicKey,
-      // Private key: obligatoria si EmailJS tiene activado "Use Private Key"
-      ...(process.env.EMAILJS_PRIVATE_KEY ? { accessToken: process.env.EMAILJS_PRIVATE_KEY } : {}),
-      template_params: params,
-    }),
-  })
-  if (!res.ok) {
-    console.error('[email] EmailJS error:', res.status, await res.text())
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      },
+      body: JSON.stringify({
+        from: process.env.EMAIL_FROM || FROM_DEFECTO,
+        to: [to],
+        reply_to: replyTo,
+        subject: contenido.subject,
+        html: contenido.html,
+        text: contenido.text,
+      }),
+    })
+    if (!res.ok) console.error('[email] Resend error:', res.status, await res.text())
+  } catch (err) {
+    console.error('[email] Resend no disponible:', err instanceof Error ? err.message : err)
   }
 }
 
@@ -42,46 +53,36 @@ function siteUrl(): string {
   return process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.dbonita.es'
 }
 
+function replyToNegocio(): string {
+  return process.env.EMAIL_REPLY_TO || REPLY_TO_DEFECTO
+}
+
 export async function enviarConfirmacion(booking: Booking): Promise<void> {
   if (!booking.clienteEmail) return
-  await sendViaEmailJS(process.env.EMAILJS_TEMPLATE_CONFIRMACION, {
-    to_name:         booking.clienteNombre,
-    to_email:        booking.clienteEmail,
-    servicio:        resolverNombres(booking.servicios),
-    fecha:           formatFecha(booking.fecha),
-    hora:            booking.hora,
-    importe_pagado:  `${booking.importePagado}€`,
-    url_cancelacion: `${siteUrl()}/cancelar/${booking.id}`,
-    notas:           booking.notas || 'Sin notas',
+  await enviar({
+    to: booking.clienteEmail,
+    replyTo: replyToNegocio(),
+    contenido: plantillaConfirmacion(booking, siteUrl()),
+    idempotencyKey: `confirmacion-${booking.id}`,
   })
 }
 
 export async function enviarNotificacionNegocio(booking: Booking): Promise<void> {
-  const businessEmail = process.env.EMAILJS_BUSINESS_EMAIL
-  if (!businessEmail) return
-  await sendViaEmailJS(process.env.EMAILJS_TEMPLATE_NEGOCIO, {
-    to_email:         businessEmail,
-    cliente_nombre:   booking.clienteNombre,
-    cliente_telefono: booking.clienteTelefono,
-    cliente_email:    booking.clienteEmail,
-    servicio:         resolverNombres(booking.servicios),
-    fecha:            formatFecha(booking.fecha),
-    hora:             booking.hora,
-    importe_pagado:   `${booking.importePagado}€`,
-    notas:            booking.notas || 'Sin notas',
+  const destino = process.env.EMAIL_NEGOCIO || REPLY_TO_DEFECTO
+  await enviar({
+    to: destino,
+    replyTo: booking.clienteEmail || replyToNegocio(),
+    contenido: plantillaNegocio(booking),
+    idempotencyKey: `negocio-${booking.id}`,
   })
 }
 
 export async function enviarCancelacion(booking: Booking, reembolso: boolean): Promise<void> {
   if (!booking.clienteEmail) return
-  await sendViaEmailJS(process.env.EMAILJS_TEMPLATE_CANCELACION, {
-    to_name:   booking.clienteNombre,
-    to_email:  booking.clienteEmail,
-    servicio:  resolverNombres(booking.servicios),
-    fecha:     formatFecha(booking.fecha),
-    hora:      booking.hora,
-    reembolso: reembolso
-      ? `Se te devolverán ${booking.importePagado}€ en 5-10 días hábiles.`
-      : `La señal de ${booking.importePagado}€ no es reembolsable por cancelación con menos de 24 horas de antelación.`,
+  await enviar({
+    to: booking.clienteEmail,
+    replyTo: replyToNegocio(),
+    contenido: plantillaCancelacion(booking, reembolso),
+    idempotencyKey: `cancelacion-${booking.id}`,
   })
 }
