@@ -77,12 +77,12 @@ export async function enviarNotificacionNegocio(booking: Booking): Promise<void>
   })
 }
 
-export async function enviarCancelacion(booking: Booking, reembolso: boolean): Promise<void> {
+export async function enviarCancelacion(booking: Booking, reembolso: boolean, porCentro = false): Promise<void> {
   if (!booking.clienteEmail) return
   await enviar({
     to: booking.clienteEmail,
     replyTo: replyToNegocio(),
-    contenido: plantillaCancelacion(booking, reembolso),
+    contenido: plantillaCancelacion(booking, reembolso, porCentro),
     idempotencyKey: `cancelacion-${booking.id}`,
   })
 }

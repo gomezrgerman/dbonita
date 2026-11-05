@@ -37,8 +37,16 @@ export function crearCita(input: NuevaCitaPanel): Promise<Booking> {
   return pedir<Booking>('/api/panel/reservas', { method: 'POST', body: JSON.stringify(input) })
 }
 
-export function actualizarEstado(id: string, estado: EstadoCita): Promise<Booking> {
-  return pedir<Booking>('/api/panel/reservas', { method: 'PATCH', body: JSON.stringify({ id, estado }) })
+export interface OpcionesCancelarPanel {
+  reembolsar: boolean
+  avisar: boolean
+}
+
+export function actualizarEstado(id: string, estado: EstadoCita, opciones?: OpcionesCancelarPanel): Promise<Booking> {
+  return pedir<Booking>('/api/panel/reservas', {
+    method: 'PATCH',
+    body: JSON.stringify({ id, estado, ...(opciones ?? {}) }),
+  })
 }
 
 export function getBloqueos(): Promise<SlotBloqueado[]> {

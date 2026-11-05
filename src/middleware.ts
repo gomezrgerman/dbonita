@@ -65,6 +65,9 @@ export async function middleware(request: NextRequest) {
   // Las rutas API nunca se bloquean por SITE_ENABLED
   if (pathname.startsWith('/api/')) return NextResponse.next()
 
+  // Enlace "Cancelar mi cita" de los emails: debe funcionar siempre, también en "Próximamente"
+  if (pathname.startsWith('/cancelar/')) return NextResponse.next()
+
   // Imagen de vista previa para redes sociales: pública también en "Próximamente"
   if (pathname === '/opengraph-image') return NextResponse.next()
 
