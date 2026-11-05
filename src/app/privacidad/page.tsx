@@ -67,7 +67,7 @@ export default function PrivacidadPage() {
             <ul className="list-disc pl-5 flex flex-col gap-1">
               <li><strong>Supabase Inc.</strong> (base de datos) — servidores en la UE.</li>
               <li><strong>Stripe Inc.</strong> (pasarela de pago) — con certificación PCI DSS.</li>
-              <li><strong>EmailJS</strong> (envío de confirmaciones por email).</li>
+              <li><strong>Resend</strong> (envío de confirmaciones por email).</li>
               <li><strong>Vercel Inc.</strong> (alojamiento web) — con DPA firmado.</li>
             </ul>
             <p className="mt-3">No cedemos tus datos a terceros con fines comerciales ni publicitarios.</p>

@@ -13,7 +13,7 @@ No hace falta nada de las secciones 1 a 3. Solo hay que hacer la sección 5 (con
 `SITE_ENABLED` = `true` → Redeploy).
 
 **B. Reserva online completa (calendario + señal con tarjeta).** Cuando Supabase, Stripe y
-EmailJS estén configurados (secciones 1 a 4), añadir en Vercel `NEXT_PUBLIC_RESERVAS_ONLINE` = `true`
+Resend estén configurados (secciones 1 a 4), añadir en Vercel `NEXT_PUBLIC_RESERVAS_ONLINE` = `true`
 y hacer Redeploy. La web pasa sola al calendario con pago de señal.
 
 Las variables se configuran en **Vercel → proyecto dbonita → Settings → Environment
@@ -46,22 +46,21 @@ Hacer primero todo en **modo prueba** y repetir en **modo real** al final (paso 
 - [ ] Copiar el **Signing secret** (`whsec_...`) y **sustituir** en Vercel
       `STRIPE_WEBHOOK_SECRET` (el actual es de hace meses y puede no corresponder).
 
-## 3. Emails (EmailJS)
+## 3. Emails (Resend)
 
-- [ ] Crear cuenta en emailjs.com (plan gratuito: 200 emails/mes).
-- [ ] Email Services → Add Service → Gmail → conectar `dbonitadenia@gmail.com`.
-- [ ] Email Templates → crear 3 plantillas con el HTML de `docs/emailjs/`
-      (cada archivo indica asunto, destinatario y remitente):
-  - `confirmacion.html` → email a la clienta al reservar
-  - `cancelacion.html` → email a la clienta al cancelar
-  - `negocio.html` → aviso al negocio de cada reserva
-- [ ] Account → Security: activar **"Allow EmailJS API for non-browser applications"**
-      y **"Use Private Key"**.
+Los emails salen de `reservas@dbonita.es`. Las plantillas están en el código
+(`src/lib/email-plantillas.ts`): confirmación a la clienta, aviso al centro y cancelación.
+
+- [ ] Crear cuenta gratis en resend.com (3.000 emails/mes, 100/día).
+- [ ] Domains → Add Domain → `dbonita.es` (región Ireland, eu-west-1).
+- [ ] Copiar los registros DNS que muestra Resend (DKIM, SPF/MX en `send`, y DMARC opcional)
+      en **Hostinger → Dominios → dbonita.es → DNS**. Esperar a que Resend marque el dominio como **Verified**.
+- [ ] API Keys → Create API Key (permiso "Sending access", dominio `dbonita.es`).
 - [ ] En Vercel, añadir:
-  - `EMAILJS_SERVICE_ID` (Email Services)
-  - `EMAILJS_PUBLIC_KEY` y `EMAILJS_PRIVATE_KEY` (Account → API keys)
-  - `EMAILJS_TEMPLATE_CONFIRMACION`, `EMAILJS_TEMPLATE_CANCELACION`, `EMAILJS_TEMPLATE_NEGOCIO`
-  - `EMAILJS_BUSINESS_EMAIL` = `dbonitadenia@gmail.com`
+  - `RESEND_API_KEY` = `re_...` (Sensitive)
+  - `EMAIL_NEGOCIO` = email del centro que recibe el aviso de cada reserva (por defecto `dbonitadenia@gmail.com`)
+  - Opcionales: `EMAIL_FROM` (por defecto `D Bonita <reservas@dbonita.es>`) y
+    `EMAIL_REPLY_TO` (a dónde responden las clientas; por defecto `dbonitadenia@gmail.com`)
 
 ## 4. Resto de variables en Vercel
 
