@@ -4,6 +4,18 @@ Estado a 4 de noviembre de 2026. La web está en producción detrás de "Próxim
 (`SITE_ENABLED` no es `true`). Todo lo de código está hecho; lo que queda son cuentas,
 claves y pruebas.
 
+## Dos formas de lanzar
+
+**A. Lanzamiento rápido (modo WhatsApp, sin Supabase ni Stripe).** Es el modo por defecto.
+La clienta elige sus tratamientos en la web y pulsa "Enviar solicitud por WhatsApp": se abre
+WhatsApp con el mensaje ya escrito (servicios, duración y total). El pago se hace en el centro.
+No hace falta nada de las secciones 1 a 3. Solo hay que hacer la sección 5 (contenido) y abrir la web (sección 8:
+`SITE_ENABLED` = `true` → Redeploy).
+
+**B. Reserva online completa (calendario + señal con tarjeta).** Cuando Supabase, Stripe y
+EmailJS estén configurados (secciones 1 a 4), añadir en Vercel `NEXT_PUBLIC_RESERVAS_ONLINE` = `true`
+y hacer Redeploy. La web pasa sola al calendario con pago de señal.
+
 Las variables se configuran en **Vercel → proyecto dbonita → Settings → Environment
 Variables**, entorno **Production**. Cada cambio de variables necesita un **Redeploy**
 (Deployments → último → ⋯ → Redeploy) para que se aplique.

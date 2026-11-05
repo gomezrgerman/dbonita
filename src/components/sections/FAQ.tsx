@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Minus } from 'lucide-react'
 import { useLang } from '@/lib/i18n'
+import { RESERVAS_ONLINE } from '@/lib/reservas-modo'
 
 export default function FAQ() {
   const { t } = useLang()
@@ -83,7 +84,7 @@ export default function FAQ() {
                     className="overflow-hidden"
                   >
                     <p className="px-6 pb-5 text-sm text-text-muted leading-relaxed pr-16" style={{ fontWeight: 400 }}>
-                      {faq.respuesta}
+                      {(!RESERVAS_ONLINE && t.faq.whatsappAnswers[faq.id]) || faq.respuesta}
                     </p>
                   </motion.dd>
                 )}

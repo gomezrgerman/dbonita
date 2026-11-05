@@ -16,6 +16,7 @@ import { useLang } from '@/lib/i18n'
 import { DIAS_CERRADO, calcularSenalCentimos, horarioDelDia, timeToMin } from '@/lib/reservas-reglas'
 import { cabeEnHueco, tipoDeServicios, type RangoOcupado } from '@/lib/reservas-capacidad'
 import type { ReservaPublica } from '@/lib/types'
+import { RESERVAS_ONLINE, mensajeSolicitudWhatsApp } from '@/lib/reservas-modo'
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -309,6 +310,24 @@ export default function Booking() {
     [serviciosEnCarrito]
   )
 
+  const wa = t.booking.whatsappMode
+  const textoContinuar = RESERVAS_ONLINE ? t.booking.cart.chooseDate : wa.sendBtn
+
+  // Siguiente paso tras elegir servicios: calendario (reserva online) o solicitud por WhatsApp.
+  const irAlCalendario = () => {
+    setDiaSeleccionado(null)
+    setHoraSeleccionada(null)
+    if (RESERVAS_ONLINE) { setPaso('calendario'); return }
+    const todosConPrecio = serviciosEnCarrito.every((s) => parsePrecio(s.precio) > 0)
+    const msg = mensajeSolicitudWhatsApp(
+      serviciosEnCarrito.map((s) => ({ nombre: s.nombre, precio: s.precio })),
+      formatDuracion(duracionTotal),
+      todosConPrecio && precioTotal > 0 ? `${precioTotal}€` : null,
+      { intro: wa.msgIntro, duration: wa.msgDuration, total: wa.msgTotal, ask: wa.msgAsk }
+    )
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer')
+  }
+
   const sugerencias = useMemo(() => {
     const ids = new Set<string>()
     carrito.forEach((id) => {
@@ -344,6 +363,7 @@ export default function Booking() {
   }, [overlayAbierto])
 
   useEffect(() => {
+    if (!RESERVAS_ONLINE) return
     const desde = toFechaStr(año, mes, 1)
     const hasta = toFechaStr(año, mes, new Date(año, mes + 1, 0).getDate())
     fetch(`/api/disponibilidad?desde=${desde}&hasta=${hasta}`)
@@ -353,7 +373,7 @@ export default function Booking() {
   }, [mes, año])
 
   useEffect(() => {
-    if (!fechaStr) { setHorasOcupadas([]); setDiaCompletoSupa(false); return }
+    if (!RESERVAS_ONLINE || !fechaStr) { setHorasOcupadas([]); setDiaCompletoSupa(false); return }
     setCargandoSlots(true)
     fetch(`/api/disponibilidad?fecha=${fechaStr}`)
       .then((res) => {
@@ -544,7 +564,12 @@ export default function Booking() {
           </motion.h2>
         </div>
 
-        {paso !== 'confirmado' && <StepIndicator paso={paso} steps={t.booking.steps} />}
+        {paso !== 'confirmado' && RESERVAS_ONLINE && <StepIndicator paso={paso} steps={t.booking.steps} />}
+        {!RESERVAS_ONLINE && (
+          <p className="text-sm text-text-muted mb-8 max-w-2xl" style={{ lineHeight: 1.6 }}>
+            {wa.notice}
+          </p>
+        )}
 
         {avisoPago && paso !== 'confirmado' && (
           <div
@@ -770,14 +795,12 @@ export default function Booking() {
                           if (sugerencias.length > 0 && !carritoMezclado) {
                             setMostrarSugerencias(true)
                           } else {
-                            setDiaSeleccionado(null)
-                            setHoraSeleccionada(null)
-                            setPaso('calendario')
+                            irAlCalendario()
                           }
                         }}
                         className="btn-primary w-full mt-2 flex items-center justify-center gap-2"
                       >
-                        {t.booking.cart.chooseDate}
+                        {textoContinuar}
                         <ArrowRight size={15} aria-hidden="true" />
                       </button>
                     </>
@@ -1298,9 +1321,7 @@ export default function Booking() {
               style={{ background: 'rgba(0,0,0,0.5)' }}
               onClick={() => {
                 setMostrarSugerencias(false)
-                setDiaSeleccionado(null)
-                setHoraSeleccionada(null)
-                setPaso('calendario')
+                if (RESERVAS_ONLINE) irAlCalendario()
               }}
             >
               <motion.div
@@ -1422,13 +1443,11 @@ export default function Booking() {
                 <button
                   onClick={() => {
                     setMostrarSugerencias(false)
-                    setDiaSeleccionado(null)
-                    setHoraSeleccionada(null)
-                    setPaso('calendario')
+                    irAlCalendario()
                   }}
                   className="btn-primary w-full flex items-center justify-center gap-2"
                 >
-                  {t.booking.upsell.continueBtn}
+                  {RESERVAS_ONLINE ? t.booking.upsell.continueBtn : wa.sendBtn}
                   <ArrowRight size={15} aria-hidden="true" />
                 </button>
 
@@ -1495,16 +1514,14 @@ export default function Booking() {
                     if (sugerencias.length > 0 && !carritoMezclado) {
                       setMostrarSugerencias(true)
                     } else {
-                      setDiaSeleccionado(null)
-                      setHoraSeleccionada(null)
-                      setPaso('calendario')
+                      irAlCalendario()
                     }
                   }}
                   className="shrink-0 flex items-center gap-1.5 text-black text-sm px-4 py-2.5"
                   style={{ fontWeight: 700, background: 'var(--color-brand)', borderRadius: '12px' }}
-                  aria-label="Elegir fecha y hora"
+                  aria-label={textoContinuar}
                 >
-                  {t.booking.cart.chooseDate}
+                  {RESERVAS_ONLINE ? t.booking.cart.chooseDate : wa.sendBtnShort}
                   <ArrowRight size={14} aria-hidden="true" />
                 </button>
               </div>
@@ -1616,14 +1633,12 @@ export default function Booking() {
                       if (sugerencias.length > 0 && !carritoMezclado) {
                         setMostrarSugerencias(true)
                       } else {
-                        setDiaSeleccionado(null)
-                        setHoraSeleccionada(null)
-                        setPaso('calendario')
+                        irAlCalendario()
                       }
                     }}
                     className="btn-primary w-full flex items-center justify-center gap-2 mt-1"
                   >
-                    {t.booking.cart.chooseDate}
+                    {textoContinuar}
                     <ArrowRight size={15} aria-hidden="true" />
                   </button>
                 </div>

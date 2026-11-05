@@ -71,6 +71,16 @@ export const translations = {
       headlinePre: 'Elige tus servicios y',
       headlineAccent: 'reserva',
       steps: ['Servicios', 'Fecha y hora', 'Datos', 'Pago'],
+      // Modo sin reserva online (NEXT_PUBLIC_RESERVAS_ONLINE apagado)
+      whatsappMode: {
+        notice: 'Elige tus tratamientos y envíanos la solicitud por WhatsApp. Te respondemos con los huecos libres y el pago se hace en el centro.',
+        sendBtn: 'Enviar solicitud por WhatsApp',
+        sendBtnShort: 'Pedir por WhatsApp',
+        msgIntro: 'Hola, me gustaría reservar:',
+        msgDuration: 'Duración',
+        msgTotal: 'Total',
+        msgAsk: '¿Qué días y horas tenéis libres?',
+      },
       back: 'Volver',
       serviceSingular: 'servicio',
       servicePlural: 'servicios',
@@ -209,6 +219,11 @@ export const translations = {
       headlinePre: 'Resolvemos tus',
       headlineAccent: 'dudas',
       ctaText: '¿Tienes otra pregunta? Escríbenos sin compromiso.',
+      // Respuestas cuando la reserva online está apagada (reserva por WhatsApp)
+      whatsappAnswers: {
+        faq3: 'Elige tus tratamientos en la sección de reservas y pulsa "Enviar solicitud por WhatsApp". Te contestamos con los días y horas disponibles y confirmamos tu cita por ahí. También puedes llamarnos o escribirnos directamente.',
+        faq5: 'Te pedimos que nos avises con al menos 24 horas de antelación si no puedes venir, por WhatsApp o por teléfono. Así otra clienta puede aprovechar ese hueco.',
+      } as Record<string, string>,
       ctaBtn: 'Preguntar por WhatsApp',
       ctaWaMsg: 'Hola, tengo una pregunta sobre vuestros servicios',
       questions: [
@@ -356,6 +371,15 @@ export const translations = {
       headlinePre: 'Choose your services and',
       headlineAccent: 'book',
       steps: ['Services', 'Date & time', 'Details', 'Payment'],
+      whatsappMode: {
+        notice: 'Choose your treatments and send us the request on WhatsApp. We will reply with available times and you pay at the studio.',
+        sendBtn: 'Send request via WhatsApp',
+        sendBtnShort: 'Request on WhatsApp',
+        msgIntro: 'Hi, I would like to book:',
+        msgDuration: 'Duration',
+        msgTotal: 'Total',
+        msgAsk: 'Which days and times do you have available?',
+      },
       back: 'Back',
       serviceSingular: 'service',
       servicePlural: 'services',
@@ -494,6 +518,10 @@ export const translations = {
       headlinePre: 'We answer your',
       headlineAccent: 'questions',
       ctaText: 'Have another question? Contact us with no obligation.',
+      whatsappAnswers: {
+        faq3: 'Choose your treatments in the booking section and tap "Send request via WhatsApp". We will reply with available days and times and confirm your appointment there. You can also call or message us directly.',
+        faq5: 'Please let us know at least 24 hours in advance if you cannot make it, via WhatsApp or phone, so another client can take that slot.',
+      } as Record<string, string>,
       ctaBtn: 'Ask on WhatsApp',
       ctaWaMsg: 'Hi, I have a question about your services',
       questions: [
