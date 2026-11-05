@@ -42,7 +42,18 @@ export default function Hero() {
     if (loaded && acceptedOnLoad === null) setAcceptedOnLoad(consent === 'accepted')
   }, [loaded, consent, acceptedOnLoad])
 
-  const showStatic = loaded && acceptedOnLoad === false
+  // La animación solo se carga en pantallas grandes: en móvil no hay ratón y su
+  // peso (~1 MB + WebGL) hacía lenta la carga. En móvil se ve la imagen fija.
+  const [isDesktop, setIsDesktop] = useState<boolean | null>(null)
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const update = () => setIsDesktop(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  const showStatic = loaded && isDesktop !== null && (!isDesktop || acceptedOnLoad === false)
 
   const initAnimation = () => {
     const us = window.UnicornStudio
@@ -158,22 +169,14 @@ export default function Hero() {
           />
         </picture>
 
-        {/*
-          Mobile: pointer-events none → UnicornStudio no recibe eventos táctiles
-          propios (que eran los que movían el canvas y mostraban bordes).
-          Nosotros aplicamos el desplazamiento vía CSS transform en el wrapper.
-        */}
-        <div
-          className="md:hidden absolute inset-0 transition-opacity"
-          style={{ pointerEvents: 'none', opacity: animReady ? 1 : 0, transitionDuration: `${FADE_MS}ms` }}
-          data-us-project="0z4NtvQtWlhYgpvjWpTQ"
-        />
-        {/* Desktop: comportamiento original sin cambios */}
-        <div
-          className="hidden md:block absolute inset-0 transition-opacity"
-          style={{ opacity: animReady ? 1 : 0, transitionDuration: `${FADE_MS}ms` }}
-          data-us-project="0z4NtvQtWlhYgpvjWpTQ"
-        />
+        {/* Desktop: animación de UnicornStudio (en móvil no se monta) */}
+        {isDesktop && (
+          <div
+            className="absolute inset-0 transition-opacity"
+            style={{ opacity: animReady ? 1 : 0, transitionDuration: `${FADE_MS}ms` }}
+            data-us-project="0z4NtvQtWlhYgpvjWpTQ"
+          />
+        )}
       </div>
 
       {/* Gradiente inferior para legibilidad del texto */}
@@ -253,10 +256,10 @@ export default function Hero() {
         />
       </motion.div>
 
-      {consent === 'accepted' && (
+      {consent === 'accepted' && isDesktop && (
         <Script
           src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.1.12/dist/unicornStudio.umd.js"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           onReady={initAnimation}
         />
       )}
