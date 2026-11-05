@@ -6,7 +6,9 @@ import {
   ChevronLeft, ChevronRight, Clock, CheckCircle, ArrowLeft,
   ArrowRight, Plus, Minus, X, Sparkles, ShoppingCart, AlertCircle, CreditCard,
 } from 'lucide-react'
-import { loadStripe } from '@stripe/stripe-js'
+// /pure: no inyecta stripe.js al importar; se carga solo al llegar a datos/pago
+import { loadStripe } from '@stripe/stripe-js/pure'
+import type { Stripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import {
   SERVICIOS, CATEGORIAS_SERVICIOS, SUGERENCIAS, MENSAJES_CRUZADA,
@@ -18,9 +20,13 @@ import { cabeEnHueco, tipoDeServicios, type RangoOcupado } from '@/lib/reservas-
 import type { ReservaPublica } from '@/lib/types'
 import { RESERVAS_ONLINE, mensajeSolicitudWhatsApp } from '@/lib/reservas-modo'
 
-const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-  : null
+const STRIPE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+let stripePromise: Promise<Stripe | null> | null = null
+function getStripePromise(): Promise<Stripe | null> | null {
+  if (!STRIPE_KEY) return null
+  if (!stripePromise) stripePromise = loadStripe(STRIPE_KEY)
+  return stripePromise
+}
 
 function toFechaStr(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -361,6 +367,11 @@ export default function Booking() {
     else delete root.dataset.overlay
     return () => { delete root.dataset.overlay }
   }, [overlayAbierto])
+
+  // Precarga stripe.js en el paso de datos para que el pago aparezca sin espera
+  useEffect(() => {
+    if (RESERVAS_ONLINE && (paso === 'datos' || paso === 'pago')) getStripePromise()
+  }, [paso])
 
   useEffect(() => {
     if (!RESERVAS_ONLINE) return
@@ -1155,7 +1166,7 @@ export default function Booking() {
           )}
 
           {/* ── PASO 4: Pago ── */}
-          {paso === 'pago' && clientSecret && stripePromise && (
+          {paso === 'pago' && clientSecret && STRIPE_KEY && (
             <motion.div
               key="pago"
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -1193,7 +1204,7 @@ export default function Booking() {
 
               {/* Stripe Payment Element */}
               <Elements
-                stripe={stripePromise}
+                stripe={getStripePromise()}
                 options={{
                   clientSecret,
                   locale: lang === 'es' ? 'es' : 'en',
