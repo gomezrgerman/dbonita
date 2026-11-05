@@ -41,7 +41,8 @@ describe('plantillaConfirmacion', () => {
 
   it('incluye datos de la cita y el enlace de cancelación', () => {
     expect(e.subject).toBe('Tu cita en D Bonita está confirmada - 1 de diciembre de 2026 a las 10:00')
-    expect(e.html).toContain('Ana López')
+    expect(e.html).toContain('Hola Ana,')
+    expect(e.html).toContain('google.com/maps')
     expect(e.html).toContain('Manicura DBonita')
     expect(e.html).toContain('10€')
     expect(e.html).toContain('https://www.dbonita.es/cancelar/abc-123')
@@ -54,7 +55,8 @@ describe('plantillaConfirmacion', () => {
       'https://www.dbonita.es'
     )
     expect(r.html).not.toContain('<script>')
-    expect(r.html).not.toContain('<img')
+    expect(r.html).not.toContain('<img src=x>')
+    expect(r.html).toContain('&lt;img src=x&gt;')
     expect(r.html).toContain('&lt;script&gt;')
   })
 })
@@ -65,6 +67,7 @@ describe('plantillaNegocio', () => {
     expect(e.subject).toBe('Nueva reserva: Ana López - 1 de diciembre de 2026 10:00')
     expect(e.html).toContain('600000000')
     expect(e.html).toContain('Alergia al látex')
+    expect(e.html).toContain('https://wa.me/34600000000')
   })
 
   it('quita saltos de línea del asunto', () => {
