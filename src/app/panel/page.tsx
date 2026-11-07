@@ -15,6 +15,7 @@ import { SERVICIOS } from '@/lib/constants'
 import type { Booking, Cliente, SlotBloqueado, EstadoCita } from '@/lib/types'
 import { esCancelableConReembolso } from '@/lib/reservas-reglas'
 import type { OpcionesCancelarPanel } from '@/lib/panel-api'
+import { useRefrescoAutomatico } from '@/lib/use-refresco-automatico'
 
 const MESES = [
   'Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -312,11 +313,15 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
   const [modalAbierto, setModalAbierto] = useState(false)
   const [confirmCancel, setConfirmCancel] = useState<Booking | null>(null)
 
+  const tick = useRefrescoAutomatico()
+
   const cargar = useCallback(async () => {
     setBookings(await getBookings())
   }, [])
 
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    cargar().catch((err) => console.error('panel citas:', err))
+  }, [cargar, tick])
 
   const citasDelDia = bookings
     .filter((b) => b.fecha === diaFiltro)
@@ -352,7 +357,7 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
       {/* Calendario mini */}
-      <div className="md:col-span-4 bg-white border border-accent p-5 self-start">
+      <div className="md:col-span-5 lg:col-span-4 bg-white border border-accent p-5 self-start">
         <div className="flex items-center justify-between mb-4">
           <button onClick={() => { if (mes === 0) { setMes(11); setAño(a => a - 1) } else setMes(m => m - 1) }}
             className="w-8 h-8 border border-accent flex items-center justify-center text-text-muted hover:border-primary hover:text-primary transition-all">
@@ -391,7 +396,7 @@ function VistaCitas({ onRefresh }: { onRefresh: () => void }) {
       </div>
 
       {/* Lista de citas del día */}
-      <div className="md:col-span-8 flex flex-col gap-3">
+      <div className="md:col-span-7 lg:col-span-8 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-2xl font-light text-text">{formatFecha(diaFiltro)}</h2>
           <div className="flex items-center gap-3">
@@ -538,9 +543,13 @@ function VistaClientes() {
 
   const [bookings, setBookings] = useState<Booking[]>([])
 
+  const tick = useRefrescoAutomatico()
+
   useEffect(() => {
-    getBookings().then((b) => { setBookings(b); setClientes(derivarClientes(b)) })
-  }, [])
+    getBookings()
+      .then((b) => { setBookings(b); setClientes(derivarClientes(b)) })
+      .catch((err) => console.error('panel clientas:', err))
+  }, [tick])
 
   const seleccionarCliente = (c: Cliente) => {
     setClienteActivo(c)
@@ -647,10 +656,13 @@ function VistaBloqueos() {
   })
   const [guardando, setGuardando] = useState(false)
 
+  const tick = useRefrescoAutomatico()
   const cargar = useCallback(async () => {
     setBloqueos(await getBloqueos())
   }, [])
-  useEffect(() => { cargar() }, [cargar])
+  useEffect(() => {
+    cargar().catch((err) => console.error('panel bloqueos:', err))
+  }, [cargar, tick])
 
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -840,12 +852,14 @@ function VistaEstadisticas() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [cargando, setCargando] = useState(true)
 
+  const tick = useRefrescoAutomatico()
+
   useEffect(() => {
     getBookings()
       .then(setBookings)
       .catch((err) => console.error('estadisticas:', err))
       .finally(() => setCargando(false))
-  }, [])
+  }, [tick])
 
   if (cargando) {
     return (
@@ -970,23 +984,23 @@ export default function PanelPage() {
   }
 
   const NAV: { key: PanelVista; label: string; icon: React.ReactNode }[] = [
-    { key: 'citas',        label: 'Citas',         icon: <Calendar size={16} /> },
-    { key: 'clientes',     label: 'Clientas',      icon: <Users size={16} /> },
-    { key: 'bloqueos',     label: 'Bloqueos',      icon: <Clock size={16} /> },
-    { key: 'estadisticas', label: 'Estadísticas',  icon: <BarChart2 size={16} /> },
+    { key: 'citas',        label: 'Citas',         icon: <Calendar size={18} /> },
+    { key: 'clientes',     label: 'Clientas',      icon: <Users size={18} /> },
+    { key: 'bloqueos',     label: 'Bloqueos',      icon: <Clock size={18} /> },
+    { key: 'estadisticas', label: 'Estadísticas',  icon: <BarChart2 size={18} /> },
   ]
 
   return (
     <div className="min-h-screen bg-bg">
-      <header className="bg-white border-b border-accent sticky top-0 z-50">
+      <header className="bg-white border-b border-accent sticky top-0 z-50 pt-[env(safe-area-inset-top)]">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between h-16">
           <div className="flex items-center gap-8">
-            <h1 className="font-display text-xl font-light">
+            <h1 className="font-display text-xl font-light whitespace-nowrap">
               <span className="text-primary">D</span>
               <span className="text-blue"> Bonita</span>
               <span className="font-sans text-xs font-light text-text-muted ml-2 tracking-widest uppercase">Panel</span>
             </h1>
-            <nav className="hidden sm:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1">
               {NAV.map((n) => (
                 <button
                   key={n.key}
@@ -1005,7 +1019,7 @@ export default function PanelPage() {
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-1.5 font-sans text-xs font-light text-text-muted hover:text-primary transition-colors"
+              className="hidden sm:flex items-center gap-1.5 whitespace-nowrap font-sans text-xs font-light text-text-muted hover:text-primary transition-colors"
             >
               <ExternalLink size={13} />
               Ver web
@@ -1020,23 +1034,9 @@ export default function PanelPage() {
             </button>
           </div>
         </div>
-        {/* Nav mobile — overflow-x-auto para 4 tabs */}
-        <nav className="sm:hidden flex border-t border-accent overflow-x-auto">
-          {NAV.map((n) => (
-            <button
-              key={n.key}
-              onClick={() => setVista(n.key)}
-              className={`flex-1 flex flex-col items-center gap-1 py-2 font-sans text-[10px] font-light tracking-widest uppercase transition-all min-w-[64px]
-                ${vista === n.key ? 'text-primary' : 'text-text-muted'}`}
-            >
-              {n.icon}
-              {n.label}
-            </button>
-          ))}
-        </nav>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-8">
         <AnimatePresence>
           <motion.div
             key={vista}
@@ -1052,6 +1052,27 @@ export default function PanelPage() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Barra inferior en móvil y tablet vertical: al alcance del pulgar y por encima de la barra del iPhone */}
+      <nav
+        aria-label="Secciones del panel"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-accent grid grid-cols-4 pb-[env(safe-area-inset-bottom)]"
+      >
+        {NAV.map((n) => (
+          <button
+            key={n.key}
+            onClick={() => setVista(n.key)}
+            aria-current={vista === n.key ? 'page' : undefined}
+            className={`flex flex-col items-center justify-center gap-1 min-h-[60px] font-sans text-[11px] font-semibold transition-colors
+              ${vista === n.key ? 'text-primary' : 'text-text-muted'}`}
+          >
+            <span className={`flex items-center justify-center w-12 h-7 rounded-full ${vista === n.key ? 'bg-primary/15' : ''}`}>
+              {n.icon}
+            </span>
+            {n.label}
+          </button>
+        ))}
+      </nav>
     </div>
   )
 }
