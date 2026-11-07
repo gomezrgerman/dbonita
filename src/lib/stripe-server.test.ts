@@ -15,7 +15,7 @@ const refundsCreate = vi.hoisted(() => vi.fn())
 vi.mock('./supabase-store', () => store)
 vi.mock('./email-server', () => email)
 vi.mock('stripe', () => ({
-  default: vi.fn().mockImplementation(() => ({ refunds: { create: refundsCreate } })),
+  default: vi.fn(function () { return { refunds: { create: refundsCreate } } }),
 }))
 
 import { confirmarReservaDesdePago, HorarioOcupadoError } from './stripe-server'

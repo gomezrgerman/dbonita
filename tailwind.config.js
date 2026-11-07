@@ -67,7 +67,6 @@ module.exports = {
     },
   },
   plugins: [
-    require('@tailwindcss/typography'),
     function ({ addUtilities }) {
       addUtilities({
         '.bg-gradient-radial': {

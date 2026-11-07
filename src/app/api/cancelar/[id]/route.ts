@@ -5,12 +5,13 @@ import { cancelarReserva, ReembolsoError } from '@/lib/cancelacion'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-type Params = { params: { id: string } }
+type Params = { params: Promise<{ id: string }> }
 
 export async function GET(_req: Request, { params }: Params) {
-  if (!UUID.test(params.id)) return NextResponse.json({ error: 'No encontrada' }, { status: 404 })
+  const { id } = await params
+  if (!UUID.test(id)) return NextResponse.json({ error: 'No encontrada' }, { status: 404 })
   try {
-    const booking = await getBookingAsync(params.id)
+    const booking = await getBookingAsync(id)
     if (!booking) return NextResponse.json({ error: 'No encontrada' }, { status: 404 })
     return NextResponse.json({
       reserva: toReservaPublica(booking),
@@ -25,10 +26,11 @@ export async function GET(_req: Request, { params }: Params) {
 // La clienta cancela desde el enlace de su email. Solo con 24 h o más de antelación,
 // y en ese caso se devuelve la señal automáticamente.
 export async function POST(_req: Request, { params }: Params) {
-  if (!UUID.test(params.id)) return NextResponse.json({ error: 'No encontrada' }, { status: 404 })
+  const { id } = await params
+  if (!UUID.test(id)) return NextResponse.json({ error: 'No encontrada' }, { status: 404 })
 
   try {
-    const booking = await getBookingAsync(params.id)
+    const booking = await getBookingAsync(id)
     if (!booking) return NextResponse.json({ error: 'No encontrada' }, { status: 404 })
     if (booking.estado === 'cancelada' || booking.estado === 'completada') {
       return NextResponse.json({ error: 'La reserva ya no se puede cancelar' }, { status: 409 })
