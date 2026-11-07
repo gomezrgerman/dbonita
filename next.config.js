@@ -15,7 +15,11 @@ const nextConfig = {
   // Hay otros package-lock.json en carpetas superiores: fijar la raíz del proyecto
   outputFileTracingRoot: __dirname,
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }]
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      // El service worker del panel debe revisarse siempre para recibir actualizaciones
+      { source: '/panel-sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache' }] },
+    ]
   },
 }
 

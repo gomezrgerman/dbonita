@@ -68,9 +68,6 @@ export async function middleware(request: NextRequest) {
   // Enlace "Cancelar mi cita" de los emails: debe funcionar siempre, también en "Próximamente"
   if (pathname.startsWith('/cancelar/')) return NextResponse.next()
 
-  // Imagen de vista previa para redes sociales: pública también en "Próximamente"
-  if (pathname === '/opengraph-image') return NextResponse.next()
-
   // SITE_ENABLED gate para el sitio público
   if (process.env.SITE_ENABLED === 'true') return NextResponse.next()
 
