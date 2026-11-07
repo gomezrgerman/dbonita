@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react'
 import { SERVICIOS } from '@/lib/constants'
@@ -26,7 +27,8 @@ function formatServicios(servicios: string[]): string {
 
 type Estado = 'cargando' | 'no-encontrada' | 'ya-cancelada' | 'completada' | 'fuera-plazo' | 'pendiente' | 'cancelada-ok'
 
-export default function CancelarPage({ params }: { params: { id: string } }) {
+export default function CancelarPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const [booking, setBooking] = useState<ReservaPublica | null>(null)
   const [estado, setEstado] = useState<Estado>('cargando')
   const [cancelando, setCancelando] = useState(false)
@@ -34,7 +36,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
   const [reembolsada, setReembolsada] = useState(false)
 
   useEffect(() => {
-    fetch(`/api/cancelar/${encodeURIComponent(params.id)}`)
+    fetch(`/api/cancelar/${encodeURIComponent(id)}`)
       .then(async (res) => {
         if (!res.ok) { setEstado('no-encontrada'); return }
         const { reserva, cancelable } = (await res.json()) as { reserva: ReservaPublica; cancelable: boolean }
@@ -45,7 +47,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
         setEstado(cancelable ? 'pendiente' : 'fuera-plazo')
       })
       .catch(() => setEstado('no-encontrada'))
-  }, [params.id])
+  }, [id])
 
   const confirmarCancelacion = async () => {
     if (!booking) return
@@ -69,10 +71,10 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
     <div className="min-h-screen bg-bg flex items-center justify-center px-6">
       <div className="w-full max-w-md flex flex-col gap-6">
 
-        <a href="/" className="font-display text-2xl font-light">
+        <Link href="/" className="font-display text-2xl font-light">
           <span style={{ color: 'var(--color-brand)' }}>D</span>
           <span style={{ color: 'var(--color-brand-blue)' }}> Bonita</span>
-        </a>
+        </Link>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -91,7 +93,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
               <p className="text-sm text-text-muted">
                 No hemos encontrado ninguna reserva con ese identificador. Comprueba el enlace de tu email.
               </p>
-              <a href="/" className="btn-secondary text-xs">Volver al inicio</a>
+              <Link href="/" className="btn-secondary text-xs">Volver al inicio</Link>
             </div>
           )}
 
@@ -102,7 +104,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
               <p className="text-sm text-text-muted">
                 La cita de <strong>{booking.clienteNombre}</strong> del <strong>{formatFecha(booking.fecha)}</strong> ya fue cancelada.
               </p>
-              <a href="/#reservar" className="btn-primary text-xs">Reservar nueva cita</a>
+              <Link href="/#reservar" className="btn-primary text-xs">Reservar nueva cita</Link>
             </div>
           )}
 
@@ -110,7 +112,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
             <div className="flex flex-col items-center gap-4 text-center">
               <CheckCircle size={48} style={{ color: 'var(--color-brand-blue)' }} />
               <h1 className="text-2xl text-text" style={{ fontWeight: 700 }}>La cita ya se realizó</h1>
-              <a href="/#reservar" className="btn-primary text-xs mt-2">Reservar nueva cita</a>
+              <Link href="/#reservar" className="btn-primary text-xs mt-2">Reservar nueva cita</Link>
             </div>
           )}
 
@@ -177,12 +179,12 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
                 >
                   {cancelando ? 'Cancelando...' : 'Sí, cancelar mi cita'}
                 </button>
-                <a
+                <Link
                   href="/"
                   className="w-full py-3 border border-accent text-center text-sm text-text-muted rounded-xl hover:border-black transition-colors"
                 >
                   Mantener la cita
-                </a>
+                </Link>
               </div>
             </div>
           )}
@@ -201,7 +203,7 @@ export default function CancelarPage({ params }: { params: { id: string } }) {
                   Te devolveremos la señal de <strong>{booking.importePagado}€</strong> en tu método de pago en 5-10 días hábiles.
                 </p>
               )}
-              <a href="/#reservar" className="btn-primary text-xs mt-2">Reservar nueva cita</a>
+              <Link href="/#reservar" className="btn-primary text-xs mt-2">Reservar nueva cita</Link>
             </div>
           )}
         </motion.div>

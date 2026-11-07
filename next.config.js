@@ -12,6 +12,8 @@ const securityHeaders = [
 
 const nextConfig = {
   poweredByHeader: false,
+  // Hay otros package-lock.json en carpetas superiores: fijar la raíz del proyecto
+  outputFileTracingRoot: __dirname,
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },
