@@ -368,6 +368,31 @@ export default function Booking() {
     return () => { delete root.dataset.overlay }
   }, [overlayAbierto])
 
+  // En movil el boton del chat tapa precios y campos: se oculta en fecha, datos y pago
+  const enPasosReserva = paso === 'calendario' || paso === 'datos' || paso === 'pago'
+  useEffect(() => {
+    const root = document.documentElement
+    if (enPasosReserva) root.dataset.reserva = 'activa'
+    else delete root.dataset.reserva
+    return () => { delete root.dataset.reserva }
+  }, [enPasosReserva])
+
+  // En movil (una columna) las horas y el boton de continuar quedan fuera de pantalla:
+  // se baja hasta ellos al elegir dia y hora
+  const horasRef = useRef<HTMLDivElement>(null)
+  const continuarRef = useRef<HTMLButtonElement>(null)
+  const esUnaColumna = () => typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches
+  useEffect(() => {
+    if (!diaSeleccionado || paso !== 'calendario' || !esUnaColumna()) return
+    // Espera a que AnimatePresence monte el bloque de horas (sale el anterior en 0,25 s)
+    const timer = setTimeout(() => horasRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350)
+    return () => clearTimeout(timer)
+  }, [diaSeleccionado, mes, año, paso])
+  useEffect(() => {
+    if (!horaSeleccionada || paso !== 'calendario' || !esUnaColumna()) return
+    continuarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [horaSeleccionada, paso])
+
   // Precarga stripe.js en el paso de datos para que el pago aparezca sin espera
   useEffect(() => {
     if (RESERVAS_ONLINE && (paso === 'datos' || paso === 'pago')) getStripePromise()
@@ -596,7 +621,7 @@ export default function Booking() {
         {(paso === 'calendario' || paso === 'datos' || paso === 'pago') && (
           <button
             onClick={volver}
-            className="flex items-center gap-2 text-xs text-text-muted mb-6 transition-colors duration-200 hover:text-black"
+            className="flex items-center gap-2 min-h-[44px] pr-4 -mt-3 text-xs text-text-muted mb-3 transition-colors duration-200 hover:text-black"
             style={{ fontFamily: '"Space Mono", monospace' }}
             aria-label={t.booking.back}
           >
@@ -849,12 +874,12 @@ export default function Booking() {
                   </div>
                 </div>
 
-                <div className="clay-card p-5" style={{ borderRadius: '20px' }}>
+                <div className="clay-card p-3 sm:p-5" style={{ borderRadius: '20px' }}>
                   <div className="flex items-center justify-between mb-5">
                     <button
                       onClick={mesPrevio}
                       aria-label={cal.prevMonth}
-                      className="w-9 h-9 rounded-card border border-accent flex items-center justify-center text-text-muted transition-all duration-200"
+                      className="w-11 h-11 sm:w-9 sm:h-9 rounded-card border border-accent flex items-center justify-center text-text-muted transition-all duration-200"
                       onMouseEnter={(e) => { e.currentTarget.style.transform = 'rotateZ(-4deg) translateY(-2px)'; e.currentTarget.style.boxShadow = 'rgb(0,0,0) -3px 3px' }}
                       onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
                     >
@@ -866,7 +891,7 @@ export default function Booking() {
                     <button
                       onClick={mesSiguiente}
                       aria-label={cal.nextMonth}
-                      className="w-9 h-9 rounded-card border border-accent flex items-center justify-center text-text-muted transition-all duration-200"
+                      className="w-11 h-11 sm:w-9 sm:h-9 rounded-card border border-accent flex items-center justify-center text-text-muted transition-all duration-200"
                       onMouseEnter={(e) => { e.currentTarget.style.transform = 'rotateZ(-4deg) translateY(-2px)'; e.currentTarget.style.boxShadow = 'rgb(0,0,0) -3px 3px' }}
                       onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
                     >
@@ -878,7 +903,7 @@ export default function Booking() {
                       <div key={d} className="text-center label-upper text-text-muted py-1">{d}</div>
                     ))}
                   </div>
-                  <div className="grid grid-cols-7 gap-1">
+                  <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
                     {diasMes.map((dia, i) => {
                       if (!dia) return <div key={`e-${i}`} />
                       const bloqueado = diasBloqueadosMes.has(toFechaStr(año, mes, dia))
@@ -891,7 +916,7 @@ export default function Booking() {
                           onClick={() => elegirDia(dia)}
                           disabled={noDisp}
                           aria-label={`${dia} ${monthName}${noDisp ? cal.notAvailable : ''}`}
-                          className="aspect-square flex items-center justify-center text-sm rounded-card transition-all duration-200"
+                          className="aspect-square min-h-[44px] sm:min-h-0 flex items-center justify-center text-sm rounded-card transition-all duration-200"
                           style={{
                             fontWeight: esSeleccionado ? 700 : 400,
                             background: esSeleccionado ? '#000' : 'transparent',
@@ -941,10 +966,11 @@ export default function Booking() {
                     </motion.div>
                   ) : (
                     <motion.div
+                      ref={horasRef}
                       key={fechaStr}
                       initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                      className="flex flex-col gap-4"
+                      className="flex flex-col gap-4 scroll-mt-24"
                     >
                       <p className="text-xl text-black" style={{ fontWeight: 700 }}>{fechaFormateada}</p>
 
@@ -991,6 +1017,7 @@ export default function Booking() {
                             })}
                           </div>
                           <button
+                            ref={continuarRef}
                             onClick={() => horaSeleccionada && setPaso('datos')}
                             disabled={!horaSeleccionada}
                             className="w-full py-4 rounded-card text-sm transition-all duration-300"
@@ -1053,7 +1080,7 @@ export default function Booking() {
                 </div>
                 <button
                   onClick={() => setPaso('servicios')}
-                  className="text-xs text-text-muted underline underline-offset-2 hover:text-black transition-colors self-start mt-1"
+                  className="text-xs text-text-muted underline underline-offset-2 hover:text-black transition-colors self-start min-h-[44px] pr-4 -mb-3 -mt-2"
                   style={{ fontWeight: 500 }}
                 >
                   {t.booking.form.changeServices}
@@ -1072,7 +1099,7 @@ export default function Booking() {
                   <div className="flex flex-col gap-2">
                     <label htmlFor="nombre" className="label-upper text-text-muted">{t.booking.form.nameLabel}</label>
                     <input
-                      id="nombre" type="text" required
+                      id="nombre" name="name" type="text" autoComplete="name" autoCapitalize="words" required
                       value={form.nombre}
                       onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
                       placeholder={t.booking.form.namePlaceholder}
@@ -1085,7 +1112,7 @@ export default function Booking() {
                   <div className="flex flex-col gap-2">
                     <label htmlFor="telefono" className="label-upper text-text-muted">{t.booking.form.phoneLabel}</label>
                     <input
-                      id="telefono" type="tel" required
+                      id="telefono" name="tel" type="tel" inputMode="tel" autoComplete="tel" required
                       value={form.telefono}
                       onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))}
                       placeholder="+34 600 000 000"
@@ -1102,7 +1129,7 @@ export default function Booking() {
                 <div className="flex flex-col gap-2">
                   <label htmlFor="email" className="label-upper text-text-muted">{t.booking.form.emailLabel}</label>
                   <input
-                    id="email" type="email" required
+                    id="email" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} required
                     value={form.email}
                     onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                     placeholder={t.booking.form.emailPlaceholder}

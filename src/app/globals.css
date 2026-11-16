@@ -209,6 +209,14 @@ html[data-overlay="open"] .chat-fab {
   pointer-events: none;
 }
 
+/* En movil, el chat se oculta durante fecha, datos y pago para no tapar precios ni campos */
+@media (max-width: 1023px) {
+  html[data-reserva="activa"] .chat-fab {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
 /* iOS Safari amplía la página al enfocar campos con letra < 16px */
 @media (max-width: 767px) {
   input,

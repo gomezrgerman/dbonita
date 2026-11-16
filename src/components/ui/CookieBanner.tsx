@@ -33,20 +33,20 @@ export default function CookieBanner() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 sm:px-6 sm:pb-6"
+          className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-3 sm:px-6 sm:pb-6"
           role="dialog"
           aria-label="Aviso de cookies"
         >
           <div
-            className="max-w-2xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 sm:p-6"
+            className="max-w-2xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 p-4 sm:p-6"
             style={{
               background: '#fff',
               borderRadius: '20px',
-              boxShadow: '0 -4px 40px rgba(0,0,0,0.12), rgb(0,0,0) -4px 4px',
+              boxShadow: '0 -4px 40px rgba(0,0,0,0.12), rgb(0,0,0) -3px 3px',
               border: '1.5px solid #000',
             }}
           >
-            <p className="text-xs text-text-muted leading-relaxed flex-1" style={{ fontWeight: 400 }}>
+            <p className="text-xs text-text-muted leading-snug sm:leading-relaxed flex-1" style={{ fontWeight: 400 }}>
               {t.cookieBanner.body}{' '}
               <a href="/privacidad" className="text-black underline underline-offset-2" style={{ fontWeight: 600 }}>
                 {t.cookieBanner.moreInfo}
@@ -55,14 +55,14 @@ export default function CookieBanner() {
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={handleReject}
-                className="px-4 py-2 text-xs text-text-muted border border-accent rounded-xl transition-colors hover:border-black hover:text-black"
+                className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-4 py-2 text-xs text-text-muted border border-accent rounded-xl transition-colors hover:border-black hover:text-black"
                 style={{ fontWeight: 500 }}
               >
                 {t.cookieBanner.reject}
               </button>
               <button
                 onClick={handleAccept}
-                className="px-4 py-2 text-xs text-white rounded-xl transition-all duration-200"
+                className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 px-4 py-2 text-xs text-white rounded-xl transition-all duration-200"
                 style={{ background: '#000', fontWeight: 700 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'rotateZ(-2deg) translateY(-2px)'
